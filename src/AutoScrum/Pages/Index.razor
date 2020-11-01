@@ -1,4 +1,43 @@
 ﻿@page "/"
+@using AutoScrum.AzureDevOps
+@using AutoScrum.AzureDevOps.Config
+@using AutoScrum.AzureDevOps.Models
+@inject HttpClient _httpClient
 
 <h1>Ready, Set... ENGAGE!</h1>
 
+<div>Sprint name: @SprintName</div>
+
+@code {
+    public string SprintName { get; set; } = "Loading";
+
+    protected async override Task OnInitializedAsync()
+    {
+        AzureDevOpsService devOpsService = new AzureDevOpsService(new AzureDevOpsConfig
+        {
+            UserEmail = "",
+            Organization = "",
+            OrganizationUrl = new Uri(""),
+            Project = "",
+            Token = ""
+        }, _httpClient);
+
+        Sprint sprint = await devOpsService.GetCurrentSprint();
+        Console.WriteLine("Current Sprint: " + sprint?.Name);
+
+        if (sprint != null)
+        {
+            SprintName = sprint?.Name;
+            var workItems = await devOpsService.GetWorkItemsForSprint(sprint.Id);
+
+            Console.WriteLine(workItems.Count);
+
+            foreach (var item in workItems)
+            {
+                Console.WriteLine($"{item.Type} {item.Id}: {item.Title}");
+            }
+        }
+
+        await base.OnInitializedAsync();
+    }
+}
