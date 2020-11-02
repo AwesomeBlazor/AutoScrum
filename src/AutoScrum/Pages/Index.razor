@@ -1,4 +1,8 @@
 ﻿@page "/"
+@using AutoScrum.AzureDevOps
+@using AutoScrum.AzureDevOps.Config
+@using AutoScrum.AzureDevOps.Models
+@inject HttpClient _httpClient
 
 <h1>Ready, Set... ENGAGE!</h1>
 
@@ -11,7 +15,19 @@
 
             <CardBody>
                 <Validations @ref="validations" Mode="ValidationMode.Manual" ValidateOnLoad="false">
-                    
+                    <Validation Validator="@ValidationRule.IsNotEmpty">
+                        <Field Horizontal="true">
+                            <FieldLabel ColumnSize="ColumnSize.Is2">Email</FieldLabel>
+                            <FieldBody ColumnSize="ColumnSize.Is10">
+                                <TextEdit Placeholder="Your email..." @bind-Text="ConnectionInfo.UserEmail">
+                                    <Feedback>
+                                        <ValidationError>User email is required!</ValidationError>
+                                    </Feedback>
+                                </TextEdit>
+                            </FieldBody>
+                        </Field>
+                    </Validation>
+
                     <Validation Validator="@ValidationRule.IsNotEmpty">
                         <Field Horizontal="true">
                             <FieldLabel ColumnSize="ColumnSize.Is2">Access Token</FieldLabel>
@@ -68,7 +84,7 @@
                 <CardTitle>Output</CardTitle>
             </CardHeader>
             <CardBody>
-                <MemoEdit Rows="25" />
+                <MemoEdit Rows="25" @bind-Text="@Output" />
             </CardBody>
             </Card>
     </Column>
@@ -76,8 +92,11 @@
         
 
 @code {
+    public string Output { get; set; } = "";
+
     public class AzureDevOpsConnectionInfo
     {
+        public string UserEmail { get; set; }
         public string PersonalAccessToken { get; set; }
         public string AzureDevOpsOrganization { get; set; }
         public string ProjectName { get; set; }
@@ -87,16 +106,52 @@
 
     Validations validations;
 
-    void Submit()
+    async Task Submit()
     {
         if (validations.ValidateAll())
         {
             validations.ClearAll();
             Console.WriteLine("Validations Passed!!!");
+
+            await GetDataFromAzureDevOps();
         }
         else
         {
             Console.WriteLine("Some validations failed...");
         }
+    }
+
+    public async Task GetDataFromAzureDevOps()
+    {
+        AzureDevOpsService devOpsService = new AzureDevOpsService(new AzureDevOpsConfig
+        {
+            UserEmail = ConnectionInfo.UserEmail,
+            Organization = ConnectionInfo.AzureDevOpsOrganization,
+            OrganizationUrl = new Uri($"https://{ConnectionInfo.AzureDevOpsOrganization}.visualstudio.com"),
+            Project = ConnectionInfo.ProjectName,
+            Token = ConnectionInfo.PersonalAccessToken
+        }, _httpClient);
+
+        Sprint sprint = await devOpsService.GetCurrentSprint();
+        Console.WriteLine("Current Sprint: " + sprint?.Name);
+
+        if (sprint != null)
+        {
+            Output = "Sprint " + sprint.Name + Environment.NewLine;
+            var workItems = await devOpsService.GetWorkItemsForSprint(sprint.Id);
+
+            Output += "Work items:" + Environment.NewLine;
+            foreach (var item in workItems)
+            {
+                Console.WriteLine($"{item.Type} {item.Id}: {item.Title}");
+                Output += $"  - {item.Type} {item.Id}: {item.Title}{Environment.NewLine}";
+            }
+        }
+        else
+        {
+            Output = "Unable to load.";
+        }
+
+        await base.OnInitializedAsync();
     }
 }
