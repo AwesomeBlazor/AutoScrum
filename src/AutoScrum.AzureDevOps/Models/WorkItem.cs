@@ -1,6 +1,6 @@
 ﻿namespace AutoScrum.AzureDevOps.Models
 {
-    public class DevOpsWorkItem
+    public class WorkItem
     {
         public int? Id { get; set; }
         public string? IterationPath { get; set; }
