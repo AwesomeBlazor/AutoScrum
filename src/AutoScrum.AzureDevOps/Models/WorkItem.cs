@@ -1,4 +1,6 @@
-﻿namespace AutoScrum.AzureDevOps.Models
+﻿using System;
+
+namespace AutoScrum.AzureDevOps.Models
 {
     public class WorkItem
     {
@@ -9,5 +11,7 @@
         public string? Title { get; set; }
         public string? StateChangeDateString { get; set; }
 		public string Url { get; set; } = string.Empty;
+
+        public bool IsBug => Type?.Equals("Bug", StringComparison.OrdinalIgnoreCase) ?? false;
     }
 }

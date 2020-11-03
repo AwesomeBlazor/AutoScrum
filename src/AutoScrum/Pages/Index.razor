@@ -2,6 +2,7 @@
 @using AutoScrum.AzureDevOps
 @using AutoScrum.AzureDevOps.Config
 @using AutoScrum.AzureDevOps.Models
+@using AutoScrum.Components
 @inject HttpClient _httpClient
 
 <h1>Ready, Set... ENGAGE!</h1>
@@ -81,15 +82,27 @@
     <Column>
         <Card Margin="Margin.Is4.OnY">
             <CardHeader>
+                <CardTitle>Work Items</CardTitle>
+            </CardHeader>
+            <CardBody>
+                <WorkItemListComponent WorkItems="@WorkItems"></WorkItemListComponent>
+            </CardBody>
+        </Card>
+    </Column>
+</Row>
+<Row>
+    <Column>
+        <Card Margin="Margin.Is4.OnY">
+            <CardHeader>
                 <CardTitle>Output</CardTitle>
             </CardHeader>
             <CardBody>
                 <MemoEdit Rows="25" @bind-Text="@Output" />
             </CardBody>
-            </Card>
+        </Card>
     </Column>
 </Row>
-        
+
 
 @code {
     public string Output { get; set; } = "";
@@ -103,6 +116,7 @@
     }
 
     protected AzureDevOpsConnectionInfo ConnectionInfo { get; set; } = new AzureDevOpsConnectionInfo();
+    protected List<WorkItem> WorkItems { get; set; } = null;
 
     Validations validations;
 
@@ -144,6 +158,8 @@
                 Console.WriteLine($"{item.Type} {item.Id}: {item.Title}");
                 Output += $"  - {item.Type} {item.Id}: {item.Title}{Environment.NewLine}";
             }
+
+            WorkItems = workItems;
         }
         else
         {
