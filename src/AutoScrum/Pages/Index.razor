@@ -15,7 +15,7 @@
 
             <CardBody>
                 <Validations @ref="validations" Mode="ValidationMode.Manual" ValidateOnLoad="false">
-                    <Validation Validator="@ValidationRule.IsNotEmpty">
+                    <Validation Validator="@ValidationRule.IsEmail">
                         <Field Horizontal="true">
                             <FieldLabel ColumnSize="ColumnSize.Is2">Email</FieldLabel>
                             <FieldBody ColumnSize="ColumnSize.Is10">
@@ -111,8 +111,6 @@
         if (validations.ValidateAll())
         {
             validations.ClearAll();
-            Console.WriteLine("Validations Passed!!!");
-
             await GetDataFromAzureDevOps();
         }
         else
