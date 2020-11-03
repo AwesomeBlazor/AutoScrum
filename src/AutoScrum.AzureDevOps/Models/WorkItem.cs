@@ -8,6 +8,6 @@
         public string? State { get; set; }
         public string? Title { get; set; }
         public string? StateChangeDateString { get; set; }
-        public string Url { get; set; }
+		public string Url { get; set; } = string.Empty;
     }
 }
