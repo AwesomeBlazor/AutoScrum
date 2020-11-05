@@ -1,0 +1,16 @@
+﻿@using AutoScrum.AzureDevOps.Models
+
+<ListGroup Flush="true">
+    @if (WorkItems != null)
+    {
+        @foreach (var wi in WorkItems)
+        {
+            <WorkItemComponent WorkItem="wi"></WorkItemComponent>
+        }
+    }
+</ListGroup>
+
+@code {
+    [Parameter]
+    public List<WorkItem>? WorkItems { get; set; }
+}

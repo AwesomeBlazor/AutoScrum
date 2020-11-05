@@ -1,0 +1,23 @@
+﻿@using AutoScrum.AzureDevOps.Models
+
+<ListGroupItem>
+    <Field Horizontal="true" Padding="Padding.IsAuto.OnAll">
+        <FieldBody ColumnSize="ColumnSize.Is1" Class="@(WorkItem.IsBug ? "bug" : "work-item")">
+            @(WorkItem.Id)
+        </FieldBody>
+        <FieldBody ColumnSize="ColumnSize.Is9">
+            @(WorkItem.Title)
+        </FieldBody>
+        <FieldBody ColumnSize="ColumnSize.Is1">
+            <Blazorise.Button>Yesterday</Blazorise.Button>
+        </FieldBody>
+        <FieldBody ColumnSize="ColumnSize.Is1">
+            <Blazorise.Button>Today</Blazorise.Button>
+        </FieldBody>
+    </Field>
+</ListGroupItem>
+
+@code {
+    [Parameter]
+    public WorkItem? WorkItem { get; set; }
+}
