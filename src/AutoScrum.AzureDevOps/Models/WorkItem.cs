@@ -17,7 +17,21 @@ namespace AutoScrum.AzureDevOps.Models
 
         public bool IsBug => Type?.Equals("Bug", StringComparison.OrdinalIgnoreCase) ?? false;
         public bool IsTask => Type?.Equals("Task", StringComparison.OrdinalIgnoreCase) ?? false;
-        public bool HasParent {  get; set; }
+        public int? ParentId { get; set; }
+        public bool HasParent => ParentId.HasValue;
+
+        public WorkItem ShallowClone()
+            => new()
+            {
+                Id = Id,
+                IterationPath = IterationPath,
+                Type = Type,
+                State = State,
+                Title = Title,
+                StateChangeDateString = StateChangeDateString,
+                Url = Url,
+                ParentId = ParentId,
+            };
 
         public string TypeCss => Type switch
         {
