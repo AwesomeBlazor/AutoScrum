@@ -90,6 +90,7 @@ namespace AutoScrum.Services
 
         private void Remove(List<WorkItem> list, WorkItem wi)
         {
+            // Remove the item if on top level.
             WorkItem item = list.FirstOrDefault(x => x.Id == wi.Id);
             if (item != null)
             {
@@ -97,10 +98,12 @@ namespace AutoScrum.Services
                 return;
             }
 
-            item = list.FirstOrDefault(x => x.Id == wi.ParentId);
-            if (item != null)
+            // Remove the item from a parent otherwise.
+            var parent = list.FirstOrDefault(x => x.Id == wi.ParentId);
+            if (parent != null)
             {
-                list.Remove(item);
+                item = parent.Children.FirstOrDefault(x => x.Id == wi.Id);
+                parent.Children.Remove(item);
             }
         }
 
