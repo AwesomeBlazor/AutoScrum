@@ -1,12 +1,9 @@
 ﻿@using AutoScrum.AzureDevOps.Models
 
 <ListGroupItem>
-    <Field Horizontal="true" Padding="Padding.IsAuto.OnAll">
-        <FieldBody ColumnSize="ColumnSize.Is1" Class="@WorkItem.TypeCss">
-            @(WorkItem.Id)
-        </FieldBody>
-        <FieldBody ColumnSize="ColumnSize.Is9">
-            @(WorkItem.Title)
+    <Field Horizontal="true" Padding="Padding.Is0.OnAll" Margin="Margin.Is0.FromBottom">
+        <FieldBody ColumnSize="ColumnSize.Is9" Class="@WorkItem.TypeCss" Padding="Padding.Is1.FromBottom">
+            #@(WorkItem.Id) @(WorkItem.Title)
         </FieldBody>
         @if (HasYesterdayButton)
         {
@@ -17,7 +14,7 @@
         @if (HasTodayButton)
         {
         <FieldBody ColumnSize="ColumnSize.Is1">
-            <Blazorise.Button Clicked="() => AddToday()">Today</Blazorise.Button>
+            <Blazorise.Button Clicked="() => OnToday?.Invoke(WorkItem)">Today</Blazorise.Button>
         </FieldBody>
         }
         @if (HasRemoveButton)
@@ -29,31 +26,25 @@
     </Field>
 </ListGroupItem>
 
-@code {
-    [Parameter]
-    public WorkItem? WorkItem { get; set; }
-
-    [Parameter]
-    public bool HasTodayButton { get; set; } = true;
-
-    [Parameter]
-    public bool HasYesterdayButton { get; set; } = true;
-
-    [Parameter]
-    public bool HasRemoveButton { get; set; } = true;
-
-    [Parameter]
-    public Action<WorkItem>? OnToday { get; set; } = null;
-
-    [Parameter]
-    public Action<WorkItem>? OnYesterday { get; set; } = null;
-
-    [Parameter]
-    public Action<WorkItem>? OnRemove { get; set; } = null;
-
-    public void AddToday()
+@if (ShowChildren && WorkItem?.Children?.Any() == true)
+{
+    @foreach (var wi in WorkItem.Children)
     {
-        Console.WriteLine("What's up!");
-        OnToday?.Invoke(WorkItem);
+        <ListGroupItem Color="Color.Dark">
+            <div Margin="Margin.Is2.OnMobile.Is5.OnDesktop" Color="Color.Dark">
+                <WorkItemComponent WorkItem="wi" HasYesterdayButton=HasYesterdayButton HasTodayButton=HasTodayButton HasRemoveButton=HasRemoveButton OnToday=OnToday OnYesterday=OnYesterday OnRemove=OnRemove></WorkItemComponent>
+            </div>
+        </ListGroupItem>
     }
+}
+
+@code {
+    [Parameter] public WorkItem? WorkItem { get; set; }
+    [Parameter] public bool HasTodayButton { get; set; } = true;
+    [Parameter] public bool HasYesterdayButton { get; set; } = true;
+    [Parameter] public bool HasRemoveButton { get; set; } = true;
+    [Parameter] public Action<WorkItem>? OnToday { get; set; } = null;
+    [Parameter] public Action<WorkItem>? OnYesterday { get; set; } = null;
+    [Parameter] public Action<WorkItem>? OnRemove { get; set; } = null;
+    [Parameter] public bool ShowChildren { get; set; }
 }

@@ -1,7 +1,4 @@
 ﻿@page "/"
-@using AutoScrum.AzureDevOps
-@using AutoScrum.AzureDevOps.Config
-@using AutoScrum.AzureDevOps.Models
 @using AutoScrum.Components
 @inject HttpClient _httpClient
 
@@ -20,7 +17,7 @@
                         <Field Horizontal="true">
                             <FieldLabel ColumnSize="ColumnSize.Is2">Email</FieldLabel>
                             <FieldBody ColumnSize="ColumnSize.Is10">
-                                <TextEdit Placeholder="Your email..." @bind-Text="ConnectionInfo.UserEmail">
+                                <TextEdit Placeholder="Your email..." @bind-Text="ConnectionInfo.UserEmail" Role="TextRole.Email">
                                     <Feedback>
                                         <ValidationError>User email is required!</ValidationError>
                                     </Feedback>
@@ -33,7 +30,7 @@
                         <Field Horizontal="true">
                             <FieldLabel ColumnSize="ColumnSize.Is2">Access Token</FieldLabel>
                             <FieldBody ColumnSize="ColumnSize.Is10">
-                                <TextEdit Placeholder="Your Azure DevOps Personal Access Token (PAT)..." @bind-Text="ConnectionInfo.PersonalAccessToken">
+                                <TextEdit Placeholder="Your Azure DevOps Personal Access Token (PAT)..." @bind-Text="ConnectionInfo.PersonalAccessToken" Role="TextRole.Password">
                                     <Feedback>
                                         <ValidationError>PAT is required!</ValidationError>
                                     </Feedback>
@@ -85,7 +82,7 @@
                 <CardTitle>Current Sprint Work Items</CardTitle>
             </CardHeader>
             <CardBody>
-                <WorkItemListComponent WorkItems="@WorkItems" IsOnBoard=true OnYesterday=AddYesterday OnToday=AddToday></WorkItemListComponent>
+                <WorkItemListComponent WorkItems="@_dailyScrum.WorkItems" IsOnBoard=true OnYesterday=AddYesterday OnToday=AddToday></WorkItemListComponent>
             </CardBody>
         </Card>
     </Column>
@@ -97,7 +94,7 @@
                 <CardTitle>Yesterday</CardTitle>
             </CardHeader>
             <CardBody>
-                <WorkItemListComponent WorkItems="@Yesterday" IsOnBoard=false OnRemove="wi => RemoveWorkItem(wi, false)"></WorkItemListComponent>
+                <WorkItemListComponent WorkItems="@_dailyScrum.Yesterday" IsOnBoard=false OnRemove="wi => RemoveWorkItem(wi, false)"></WorkItemListComponent>
             </CardBody>
         </Card>
     </Column>
@@ -107,7 +104,7 @@
                 <CardTitle>Today</CardTitle>
             </CardHeader>
             <CardBody>
-                <WorkItemListComponent WorkItems="@Today" IsOnBoard=false OnRemove="wi => RemoveWorkItem(wi, false)"></WorkItemListComponent>
+                <WorkItemListComponent WorkItems="@_dailyScrum.Today" IsOnBoard=false OnRemove="wi => RemoveWorkItem(wi, false)"></WorkItemListComponent>
             </CardBody>
         </Card>
     </Column>
@@ -124,132 +121,3 @@
         </Card>
     </Column>
 </Row>
-
-
-@code {
-    public string Output { get; set; } = "";
-
-    public class AzureDevOpsConnectionInfo
-    {
-        public string UserEmail { get; set; }
-        public string PersonalAccessToken { get; set; }
-        public string AzureDevOpsOrganization { get; set; }
-        public string ProjectName { get; set; }
-    }
-
-    public void AddYesterday(WorkItem wi)
-    {
-        if (!Yesterday.Any(x => x.Id == wi.Id))
-        {
-            Yesterday.Add(wi);
-            UpdateOutput();
-        }
-    }
-
-    public void AddToday(WorkItem wi)
-    {
-        Console.WriteLine("Add today");
-        if (!Today.Any(x => x.Id == wi.Id))
-        {
-            Today.Add(wi);
-            UpdateOutput();
-        }
-        else
-        {
-            Console.WriteLine("Or not");
-        }
-    }
-
-    public void RemoveWorkItem(WorkItem wi, bool isToday)
-    {
-        var list = isToday ? Today : Yesterday;
-        list.Remove(wi);
-
-        UpdateOutput();
-    }
-
-    protected AzureDevOpsConnectionInfo ConnectionInfo { get; set; } = new AzureDevOpsConnectionInfo();
-    protected List<WorkItem> WorkItems { get; set; } = null;
-
-    protected List<WorkItem> Yesterday { get; set; } = new List<WorkItem>();
-    protected List<WorkItem> Today { get; set; } = new List<WorkItem>();
-
-    Validations validations;
-
-    async Task Submit()
-    {
-        if (validations.ValidateAll())
-        {
-            validations.ClearAll();
-            await GetDataFromAzureDevOps();
-        }
-        else
-        {
-            Console.WriteLine("Some validations failed...");
-        }
-    }
-
-    public async Task GetDataFromAzureDevOps()
-    {
-        AzureDevOpsService devOpsService = new AzureDevOpsService(new AzureDevOpsConfig
-        {
-            UserEmail = ConnectionInfo.UserEmail,
-            Organization = ConnectionInfo.AzureDevOpsOrganization,
-            OrganizationUrl = new Uri($"https://{ConnectionInfo.AzureDevOpsOrganization}.visualstudio.com"),
-            Project = ConnectionInfo.ProjectName,
-            Token = ConnectionInfo.PersonalAccessToken
-        }, _httpClient);
-
-        Sprint sprint = await devOpsService.GetCurrentSprint();
-        Console.WriteLine("Current Sprint: " + sprint?.Name);
-
-        if (sprint != null)
-        {
-            Output = "Sprint " + sprint.Name + Environment.NewLine;
-            var workItems = await devOpsService.GetWorkItemsForSprintForMe(sprint);
-
-            Output += "Your Work items:" + Environment.NewLine;
-            foreach (var item in workItems)
-            {
-                Console.WriteLine($"{item.Type} {item.Id}: {item.Title}");
-                Output += $"  - {item.Type} {item.Id}: {item.Title}{Environment.NewLine}";
-            }
-
-            WorkItems = workItems;
-        }
-        else
-        {
-            Output = "Unable to load.";
-        }
-
-        await base.OnInitializedAsync();
-    }
-
-    public void UpdateOutput()
-    {
-        string output = string.Empty;
-        output = GenerateDayReport("Yesterday", Yesterday);
-
-        if(string.IsNullOrWhiteSpace(output))
-        {
-            output += Environment.NewLine;
-        }
-
-        output += GenerateDayReport("Today", Today);
-
-        Output = output;
-
-        this.StateHasChanged();
-    }
-
-    public static string GenerateDayReport(string day, List<WorkItem> workItems)
-    {
-        if (workItems.Any())
-        {
-            string report = string.Join(string.Empty, workItems.Select(wi => $"  - {wi.State} - {wi.Title} ({wi.Type}){Environment.NewLine}"));
-            return $"{day}{Environment.NewLine}{report}";
-        }
-
-        return string.Empty;
-    }
-}

@@ -1,5 +1,6 @@
 ﻿using AutoScrum.AzureDevOps.Config;
 using AutoScrum.AzureDevOps.Models;
+using AutoScrum.AzureDevOps.Utils;
 using Microsoft.TeamFoundation.Work.WebApi;
 using Newtonsoft.Json;
 using System;
@@ -10,7 +11,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
-using WorkItem = Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItem;
+using AzureDevOpsWorkItem = Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItem;
 using WorkItemModel = AutoScrum.AzureDevOps.Models.WorkItem;
 
 namespace AutoScrum.AzureDevOps
@@ -102,33 +103,54 @@ namespace AutoScrum.AzureDevOps
             return await GetWorkItems(wiIds);
         }
 
-        public async Task<List<WorkItemModel>?> GetWorkItems(IEnumerable<int> ids)
+        public async Task<List<WorkItemModel>?> GetWorkItems(IEnumerable<int> ids, bool enableHierarchy = true)
         {
             string idsAsString = string.Join(",", ids.Select(x => x.ToString()));
-            HttpResponseMessage? result = await _httpClient.GetAsync(new Uri(_config.OrganizationUrl, $"/DefaultCollection/{_config.Project}/_apis/wit/workitems?ids={idsAsString}&api-version=6.0"));
+            string fields = "System.State,System.Reason,System.WorkItemType,System.Parent,System.IterationPath,System.CreatedDate,System.ChangedDate,System.Title,Microsoft.VSTS.Common.StateChangeDate,Microsoft.VSTS.Scheduling.Effort,System.Tags,Microsoft.VSTS.Scheduling.RemainingWork,System.RelatedLinks,System.RelatedLinkCount,System.ExternalLinkCount";
+            HttpResponseMessage? result = await _httpClient.GetAsync(new Uri(_config.OrganizationUrl, $"/DefaultCollection/{_config.Project}/_apis/wit/workitems?ids={idsAsString}&fields={fields}&api-version=6.0"));
             if ((result?.IsSuccessStatusCode) != true)
             {
                 return null;
             }
 
             string? json = await result.Content.ReadAsStringAsync();
-            var devOpsWorkItems = JsonConvert.DeserializeObject<AzureDevOpsListResult<WorkItem>>(json);
+            var devOpsWorkItems = JsonConvert.DeserializeObject<AzureDevOpsListResult<AzureDevOpsWorkItem>>(json);
 
             List<WorkItemModel>? workItems = devOpsWorkItems
                 ?.Value
                 .Select(x => new WorkItemModel
                 {
                     Id = x.Id,
-                    Title = x.Fields["System.Title"].ToString(),
-                    IterationPath = x.Fields["System.IterationPath"].ToString(),
+                    Title = x.ParseAsString("System.Title"),
+                    IterationPath = x.ParseAsString("System.IterationPath"),
                     Type = x.Fields["System.WorkItemType"].ToString(),
                     State = x.Fields["System.State"].ToString(),
                     StateChangeDateString = x.Fields["Microsoft.VSTS.Common.StateChangeDate"].ToString(),
+                    ParentId = x.ParseAsNullableInt("System.Parent"),
                     Url = x.Url
                 })
                 .ToList();
 
-            return workItems;
+            List<WorkItemModel>? groupedItems = workItems;
+            if (workItems != null && enableHierarchy)
+            {
+                groupedItems = new List<WorkItemModel>();
+                foreach (var wi in workItems)
+                {
+                    wi.Parent = workItems.FirstOrDefault(x => x.Id == wi.ParentId);
+                    if (wi.Parent != null)
+                    {
+                        wi.Parent.Children.Add(wi);
+                    }
+                    else
+                    {
+                        // Only top level items are added.
+                        groupedItems.Add(wi);
+                    }
+                }
+            }
+
+            return groupedItems;
         }
     }
 }
