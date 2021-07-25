@@ -4,17 +4,16 @@ using AutoScrum.AzureDevOps;
 using AutoScrum.Services;
 using Blazorise;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Components;
 
 namespace AutoScrum.Pages
 {
     public partial class Index
     {
         
-        private readonly DailyScrumService _dailyScrum = new DailyScrumService();
-        public string Output { get; set; } = "";
+        private readonly DailyScrumService _dailyScrum = new();
+        public MarkupString Output { get; set; } = (MarkupString)"";
 
         protected AzureDevOpsConnectionInfo ConnectionInfo { get; set; } = new AzureDevOpsConnectionInfo();
 
@@ -49,14 +48,11 @@ namespace AutoScrum.Pages
 
             if (sprint != null)
             {
-                Output = "Sprint " + sprint.Name + Environment.NewLine;
                 var workItems = await devOpsService.GetWorkItemsForSprintForMe(sprint);
 
-                Output += "Your Work items:" + Environment.NewLine;
                 foreach (var item in workItems)
                 {
                     Console.WriteLine($"{item.Type} {item.Id}: {item.Title}");
-                    Output += $"  - {item.Type} {item.Id}: {item.Title}{Environment.NewLine}";
                 }
 
                 _dailyScrum.SetWorkItems(workItems);
@@ -64,7 +60,7 @@ namespace AutoScrum.Pages
             }
             else
             {
-                Output = "Unable to load.";
+                Console.WriteLine("Unable to load");
             }
 
             base.StateHasChanged();
@@ -72,7 +68,9 @@ namespace AutoScrum.Pages
 
         public void UpdateOutput()
         {
-            Output = _dailyScrum.GeneratePlainTextReport();
+            string markdown = _dailyScrum.GenerateReport();
+            string html = Markdig.Markdown.ToHtml(markdown ?? string.Empty);
+            Output = (MarkupString)html;
 
             this.StateHasChanged();
         }
@@ -101,17 +99,6 @@ namespace AutoScrum.Pages
             }
 
             UpdateOutput();
-        }
-
-        public static string GenerateDayReport(string day, List<WorkItem> workItems)
-        {
-            if (workItems.Any())
-            {
-                string report = string.Join(string.Empty, workItems.Select(wi => $"  - {wi.State} - {wi.Title} ({wi.Type}){Environment.NewLine}"));
-                return $"{day}{Environment.NewLine}{report}";
-            }
-
-            return string.Empty;
         }
     }
 }

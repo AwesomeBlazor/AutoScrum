@@ -124,47 +124,12 @@ namespace AutoScrum.Services
             return parent;
         }
 
-        public string GeneratePlainTextReport()
+        public string GenerateReport(bool isMarkdown = true)
         {
-            // All days except for Monday will have "Yesterday", otherwise "Friday".
-            // NOTE: MVP doesn't support flexible dates like not working on project for X day and then coming back. (or work on weekends)
-            string previousDay = "Yesterday";
-            var diff = _dateService.GetPreviousWorkData(TodayDate).Subtract(TodayDate).TotalDays;
-            if (TodayDate.Subtract(_dateService.GetPreviousWorkData(TodayDate)).TotalDays > 1)
-            {
-                previousDay = "Friday";
-            }
-
-            string output = GenerateDayReport(previousDay, Yesterday);
-            if (string.IsNullOrWhiteSpace(output))
-            {
-                output += Environment.NewLine;
-            }
-
-            output += GenerateDayReport("Today", Today);
-
-            return output;
-        }
-
-        public static string GenerateDayReport(string day, List<WorkItem> workItems)
-        {
-            if (workItems.Any())
-            {
-                string report = $"{day}{Environment.NewLine}";
-                foreach (var wi in workItems)
-                {
-                    report += $"  - {wi.State} - {(wi.Type == "Task" ? "Task " : "" )}#{wi.Id}: {wi.Title}{Environment.NewLine}";
-
-                    foreach (var child in wi.Children)
-                    {
-                        report += $"    - {child.State} - {child.Title}{Environment.NewLine}";
-                    }
-                }
-
-                return report;
-            }
-
-            return string.Empty;
+            var yesterday = _dateService.GetPreviousWorkData(TodayDate);
+            return isMarkdown
+                ? DailyScrumGenerator.GenerateMarkdownReport(TodayDate, yesterday, Today, Yesterday)
+                : DailyScrumGenerator.GeneratePlainTextReport(TodayDate, yesterday, Today, Yesterday);
         }
     }
 }
