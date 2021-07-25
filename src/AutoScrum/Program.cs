@@ -1,3 +1,5 @@
+using AutoScrum.Services;
+using Blazored.LocalStorage;
 using Blazorise;
 using Blazorise.Bootstrap;
 using Blazorise.Icons.FontAwesome;
@@ -17,6 +19,7 @@ namespace AutoScrum
             builder.RootComponents.Add<App>("#app");
 
             builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
+			builder.Services.AddTransient<ConfigService>();
 
 			builder.Services
 				.AddBlazorise(options =>
@@ -24,13 +27,10 @@ namespace AutoScrum
 					options.ChangeTextOnKeyPress = true;
 				})				
 				.AddBootstrapProviders()
-				.AddFontAwesomeIcons();
+				.AddFontAwesomeIcons()
+				.AddBlazoredLocalStorage();
 
 			var host = builder.Build();
-
-			//host.Services
-			//  .UseBootstrapProviders()
-			//  .UseFontAwesomeIcons();
 
 			await host.RunAsync();
         }

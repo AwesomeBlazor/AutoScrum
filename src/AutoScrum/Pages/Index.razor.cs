@@ -11,13 +11,35 @@ namespace AutoScrum.Pages
 {
     public partial class Index
     {
-        
         private readonly DailyScrumService _dailyScrum = new();
+
+        [Inject] public ConfigService ConfigService { get; set; }
+
         public MarkupString Output { get; set; } = (MarkupString)"";
 
         protected AzureDevOpsConnectionInfo ConnectionInfo { get; set; } = new AzureDevOpsConnectionInfo();
 
         Validations validations;
+
+        protected async override Task OnInitializedAsync()
+        {
+            try
+            {
+                var config = await ConfigService.GetConfig();
+                if (config != null)
+                {
+                    ConnectionInfo = config;
+
+                    await GetDataFromAzureDevOps();
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+            }
+
+            await base.OnInitializedAsync();
+        }
 
         async Task Submit()
         {
@@ -30,6 +52,21 @@ namespace AutoScrum.Pages
             {
                 Console.WriteLine("Some validations failed...");
             }
+        }
+
+        async Task SaveConfig()
+        {
+            if (validations.ValidateAll())
+            {
+                validations.ClearAll();
+
+                await ConfigService.SetConfig(ConnectionInfo);
+            }
+        }
+
+        async Task DeleteConfig()
+        {
+            await ConfigService.Clear();
         }
 
         public async Task GetDataFromAzureDevOps()
