@@ -6,6 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Blazored.LocalStorage" Version="4.1.2" />
     <PackageReference Include="Blazorise.Bootstrap" Version="0.9.4.1" />
     <PackageReference Include="Blazorise.Icons.FontAwesome" Version="0.9.4.1" />
     <PackageReference Include="Markdig" Version="0.25.0" />
