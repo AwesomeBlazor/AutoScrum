@@ -10,7 +10,7 @@ namespace AutoScrum.AzureDevOps.Models
         public string? Type { get; set; }
         public string? State { get; set; }
         public string? Title { get; set; }
-        public string? StateChangeDateString { get; set; }
+        public DateTimeOffset? StateChangeDate { get; set; }
 		public string Url { get; set; } = string.Empty;
         public WorkItem? Parent { get; set; } = null;
         public List<WorkItem> Children { get; set; } = new List<WorkItem>();
@@ -28,7 +28,7 @@ namespace AutoScrum.AzureDevOps.Models
                 Type = Type,
                 State = State,
                 Title = Title,
-                StateChangeDateString = StateChangeDateString,
+                StateChangeDate = StateChangeDate,
                 Url = Url,
                 ParentId = ParentId,
             };

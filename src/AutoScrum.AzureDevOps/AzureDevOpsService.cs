@@ -123,9 +123,9 @@ namespace AutoScrum.AzureDevOps
                     Id = x.Id,
                     Title = x.ParseAsString("System.Title"),
                     IterationPath = x.ParseAsString("System.IterationPath"),
-                    Type = x.Fields["System.WorkItemType"].ToString(),
-                    State = x.Fields["System.State"].ToString(),
-                    StateChangeDateString = x.Fields["Microsoft.VSTS.Common.StateChangeDate"].ToString(),
+                    Type = x.ParseAsString("System.WorkItemType"),
+                    State = x.ParseAsString("System.State"),
+                    StateChangeDate = x.ParseAsDate("Microsoft.VSTS.Common.StateChangeDate"),
                     ParentId = x.ParseAsNullableInt("System.Parent"),
                     Url = x.Url
                 })
