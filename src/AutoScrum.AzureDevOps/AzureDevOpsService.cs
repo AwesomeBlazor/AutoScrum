@@ -52,13 +52,14 @@ namespace AutoScrum.AzureDevOps
                 {
                     Id = x.Id,
                     Name = x.Name,
+                    Path = x.Path
                 })
                 .FirstOrDefault();
 
             return currentSprint;
         }
 
-        public async Task<List<WorkItemModel>?> GetWorkItemsForSprint(Guid sprintId, string? userEmail = null)
+        public async Task<List<WorkItemModel>?> GetWorkItemsForSprint(Guid sprintId)
         {
             HttpResponseMessage? result = await _httpClient.GetAsync(new Uri(_config.OrganizationUrl, $"/DefaultCollection/{_config.Project}/_apis/work/teamsettings/iterations/{sprintId}/workitems?api-version=6.0-Preview.1"));
             if ((result?.IsSuccessStatusCode) != true)
@@ -72,6 +73,30 @@ namespace AutoScrum.AzureDevOps
             List<int>? wiIds = iterationWis.WorkItemRelations
                 .Where(x => x.Rel == null && x.Target != null)
                 .Select(x => x.Target.Id)
+                .ToList();
+
+            return await GetWorkItems(wiIds);
+        }
+
+        public async Task<List<WorkItemModel>?> GetWorkItemsForSprintForMe(Sprint sprint)
+        {
+            HttpResponseMessage? result = await _httpClient.PostAsJsonAsync(new Uri(_config.OrganizationUrl, $"/DefaultCollection/{_config.Project}/_apis/wit/wiql?api-version=6.0"),
+            new
+            {
+                // The [System.Iteration] doesn't seem to work for some reason...
+                query = $"SELECT [State], [Title] FROM WorkItems WHERE [Assigned to] = @Me AND [System.IterationPath] = '{sprint.Path}' ORDER BY [State] Asc, [Changed Date] Desc"
+            });
+
+            if ((result?.IsSuccessStatusCode) != true)
+            {
+                return null;
+            }
+
+            string? json = await result.Content.ReadAsStringAsync();
+            var iterationWis = JsonConvert.DeserializeObject<AzureDevOpsWiqlResult>(json);
+
+            List<int>? wiIds = iterationWis.WorkItems
+                .Select(x => x.Id)
                 .ToList();
 
             return await GetWorkItems(wiIds);

@@ -2,22 +2,58 @@
 
 <ListGroupItem>
     <Field Horizontal="true" Padding="Padding.IsAuto.OnAll">
-        <FieldBody ColumnSize="ColumnSize.Is1" Class="@(WorkItem.IsBug ? "bug" : "work-item")">
+        <FieldBody ColumnSize="ColumnSize.Is1" Class="@WorkItem.TypeCss">
             @(WorkItem.Id)
         </FieldBody>
         <FieldBody ColumnSize="ColumnSize.Is9">
             @(WorkItem.Title)
         </FieldBody>
+        @if (HasYesterdayButton)
+        {
         <FieldBody ColumnSize="ColumnSize.Is1">
-            <Blazorise.Button>Yesterday</Blazorise.Button>
+            <Blazorise.Button Clicked="() => OnYesterday?.Invoke(WorkItem)">Yesterday</Blazorise.Button>
         </FieldBody>
+        }
+        @if (HasTodayButton)
+        {
         <FieldBody ColumnSize="ColumnSize.Is1">
-            <Blazorise.Button>Today</Blazorise.Button>
+            <Blazorise.Button Clicked="() => AddToday()">Today</Blazorise.Button>
         </FieldBody>
+        }
+        @if (HasRemoveButton)
+        {
+        <FieldBody ColumnSize="ColumnSize.Is1">
+            <Blazorise.Button Clicked="() => OnRemove?.Invoke(WorkItem)">Remove</Blazorise.Button>
+        </FieldBody>
+        }
     </Field>
 </ListGroupItem>
 
 @code {
     [Parameter]
     public WorkItem? WorkItem { get; set; }
+
+    [Parameter]
+    public bool HasTodayButton { get; set; } = true;
+
+    [Parameter]
+    public bool HasYesterdayButton { get; set; } = true;
+
+    [Parameter]
+    public bool HasRemoveButton { get; set; } = true;
+
+    [Parameter]
+    public Action<WorkItem>? OnToday { get; set; } = null;
+
+    [Parameter]
+    public Action<WorkItem>? OnYesterday { get; set; } = null;
+
+    [Parameter]
+    public Action<WorkItem>? OnRemove { get; set; } = null;
+
+    public void AddToday()
+    {
+        Console.WriteLine("What's up!");
+        OnToday?.Invoke(WorkItem);
+    }
 }
