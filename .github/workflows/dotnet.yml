@@ -34,7 +34,7 @@ jobs:
         # Directory location of the application source code
         app_location: ./src
         # Required token
-        azure_static_web_apps_api_token: $AZURE_STATIC_WEB_APPS_API_TOKEN
+        azure_static_web_apps_api_token: ${{ secrets.$AZURE_STATIC_WEB_APPS_API_TOKEN }}
         # Custom command for Oryx to run when building Azure Functions source code
         # api_build_command: # optional
         # Directory location of the Azure Functions source code
