@@ -24,11 +24,13 @@ jobs:
       run: dotnet build ./src/AutoScrum.sln --no-restore
     - name: Test
       run: dotnet test ./src/AutoScrum.sln --no-build --verbosity normal
+    - name: Publish
+      run: dotnet publish ./src/AutoScrum/AutoScrum.csproj -c Release -o ./dist/ --no-restore
     - name: Azure Static Web Apps Deploy
       uses: Azure/static-web-apps-deploy@v1
       with:
         # Action to perform
-        action: dotnet publish ./src/AutoScrum/AutoScrum.csproj -c Release -o ./dist/
+        action: 'upload'
         # Directory location of the application source code
         app_location: ./src
         # Required token
