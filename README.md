@@ -1,3 +1,5 @@
+[![.NET](https://github.com/jernejk/AutoScrum/actions/workflows/dotnet.yml/badge.svg)](https://github.com/jernejk/AutoScrum/actions/workflows/dotnet.yml)
+
 # AutoScrum
 
 **Hi all!**
