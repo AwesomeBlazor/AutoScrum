@@ -81,7 +81,7 @@ namespace AutoScrum.Services
                 string report = $"{day}{Environment.NewLine}";
                 foreach (var wi in workItems)
                 {
-                    report += $"  - {wi.State} - {(wi.Type == "Task" ? "Task " : "")}#{wi.Id}: {wi.Title}{Environment.NewLine}";
+                    report += $"  - {wi.State} - {(wi.WorkItemType == WorkItemType.Task ? "Task " : "")}#{wi.Id}: {wi.Title}{Environment.NewLine}";
 
                     foreach (var child in wi.Children)
                     {

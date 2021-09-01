@@ -34,10 +34,10 @@ namespace AutoScrum.Services
             // All recently completed work items should be moved to yesterday.
             // All in-progress work items that older than a day, should be added to yesterday.
             var yesterday = _dateService.GetPreviousWorkDate(TodayDay);
-            foreach (var wi in allWorkItems.Where(x => x.State == "In Progress" || x.State == "Done"))
+            foreach (var wi in allWorkItems.Where(x => x.StateType is StateType.InProgress or StateType.Done))
             {
                 bool hasChangedRecently = wi.StateChangeDate > yesterday && wi.StateChangeDate < TodayMidnight;
-                if (wi.State == "In Progress")
+                if (wi.StateType == StateType.InProgress)
                 {
                     AddToday(wi);
 

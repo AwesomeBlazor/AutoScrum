@@ -11,14 +11,31 @@ namespace AutoScrum.AzureDevOps.Models
         public string? State { get; set; }
         public string? Title { get; set; }
         public DateTimeOffset? StateChangeDate { get; set; }
-		public string Url { get; set; } = string.Empty;
+        public string Url { get; set; } = string.Empty;
         public WorkItem? Parent { get; set; } = null;
         public List<WorkItem> Children { get; set; } = new List<WorkItem>();
 
-        public bool IsBug => Type?.Equals("Bug", StringComparison.OrdinalIgnoreCase) ?? false;
-        public bool IsTask => Type?.Equals("Task", StringComparison.OrdinalIgnoreCase) ?? false;
         public int? ParentId { get; set; }
         public bool HasParent => ParentId.HasValue;
+
+        public StateType StateType
+            => State?.ToUpperInvariant() switch
+            {
+                "IN PROGRESS" => StateType.InProgress,
+                "DONE" => StateType.Done,
+                "Committed" => StateType.Committed,
+                "Approved" => StateType.Approved,
+                _ => StateType.NotStarted,
+            };
+
+        public WorkItemType WorkItemType
+            => Type?.ToUpperInvariant() switch
+            {
+                "BUG" => WorkItemType.Bug,
+                "TASK" => WorkItemType.Task,
+                "USER STORY" => WorkItemType.UserStory,
+                _ => WorkItemType.PBI
+            };
 
         public WorkItem ShallowClone()
             => new()
@@ -33,13 +50,12 @@ namespace AutoScrum.AzureDevOps.Models
                 ParentId = ParentId,
             };
 
-        public string TypeCss => Type switch
+        public string TypeCss => WorkItemType switch
         {
-            null => "",
-            _ when Type.Equals("Bug", StringComparison.OrdinalIgnoreCase) => "bug",
-            _ when Type.Equals("Task", StringComparison.OrdinalIgnoreCase) => "task",
-            _ when Type.Equals("Product Backlog Item", StringComparison.OrdinalIgnoreCase) => "pbi",
-            _ when Type.Equals("User Story", StringComparison.OrdinalIgnoreCase) => "user-story",
+            WorkItemType.Bug => "bug",
+            WorkItemType.Task => "task",
+            WorkItemType.PBI => "pbi",
+            WorkItemType.UserStory => "user-story",
             _ => ""
         };
     }
