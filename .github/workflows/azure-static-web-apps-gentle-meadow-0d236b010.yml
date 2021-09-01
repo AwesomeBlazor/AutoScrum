@@ -18,6 +18,15 @@ jobs:
       - uses: actions/checkout@v2
         with:
           submodules: true
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: 6.0.x
+          include-prerelease: True
+      - name: Restore dependencies
+        run: dotnet restore ./src/AutoScrum.sln
+      - name: Publish
+        run: dotnet publish ./src/AutoScrum/AutoScrum.csproj -c Release -o ./dist/ --no-restore
       - name: Build And Deploy
         id: builddeploy
         uses: Azure/static-web-apps-deploy@v1
@@ -30,6 +39,8 @@ jobs:
           app_location: "src/AutoScrum" # App source code path
           # api_location: "" # Api source code path - optional
           # output_location: "./src/AutoScrum/bin/Release/net6.0/wwwroot" # Built app content directory - optional
+          # app_artifact_location: "./dist/wwwroot" # Built app content directory - optional
+          output_location: "./wwwroot" # Built app content directory - optional
           ###### End of Repository/Build Configurations ######
 
   close_pull_request_job:
