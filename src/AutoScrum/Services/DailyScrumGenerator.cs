@@ -1,18 +1,15 @@
 ﻿using AutoScrum.AzureDevOps.Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace AutoScrum.Services
 {
     public static class DailyScrumGenerator
     {
-        public static string GenerateMarkdownReport(DateTimeOffset todayDay, DateTimeOffset previousDay, List<WorkItem> today, List<WorkItem> yesterday)
+        public static string GenerateMarkdownReport(DateOnly todayDay, DateOnly previousDay, List<WorkItem> today, List<WorkItem> yesterday)
         {
             // All days except for Monday will have "Yesterday", otherwise "Friday".
             // NOTE: MVP doesn't support flexible dates like not working on project for X day and then coming back. (or work on weekends)
             string previousDayName = "Yesterday";
-            if (todayDay.Subtract(previousDay).TotalDays > 1)
+            if (previousDay.DayOfWeek == DayOfWeek.Friday)
             {
                 previousDayName = "Friday";
             }
@@ -56,12 +53,12 @@ namespace AutoScrum.Services
             return string.Empty;
         }
 
-        public static string GeneratePlainTextReport(DateTimeOffset todayDay, DateTimeOffset previousDay, List<WorkItem> today, List<WorkItem> yesterday)
+        public static string GeneratePlainTextReport(DateOnly todayDay, DateOnly previousDay, List<WorkItem> today, List<WorkItem> yesterday)
         {
             // All days except for Monday will have "Yesterday", otherwise "Friday".
             // NOTE: MVP doesn't support flexible dates like not working on project for X day and then coming back. (or work on weekends)
             string previousDayName = "Yesterday";
-            if (todayDay.Subtract(previousDay).TotalDays > 1)
+            if (previousDay.DayOfWeek == DayOfWeek.Friday)
             {
                 previousDayName = "Friday";
             }

@@ -3,8 +3,6 @@ using AutoScrum.AzureDevOps.Models;
 using AutoScrum.AzureDevOps;
 using AutoScrum.Services;
 using Blazorise;
-using System;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Components;
 
 namespace AutoScrum.Pages
@@ -109,7 +107,7 @@ namespace AutoScrum.Pages
             string html = Markdig.Markdown.ToHtml(markdown ?? string.Empty);
             Output = (MarkupString)html;
 
-            this.StateHasChanged();
+            StateHasChanged();
         }
 
         public void AddYesterday(WorkItem wi)

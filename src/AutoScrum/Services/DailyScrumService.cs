@@ -1,8 +1,4 @@
 ﻿using AutoScrum.AzureDevOps.Models;
-using Microsoft.VisualStudio.Services.Common;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace AutoScrum.Services
 {
@@ -12,13 +8,15 @@ namespace AutoScrum.Services
 
         public DailyScrumService()
         {
-            TodayDate = _dateService.GetDateTimeUtc();
+            TodayMidnight = _dateService.GetDateTimeLocal();
+            TodayDay = _dateService.GetToday();
         }
 
         public List<WorkItem> Yesterday { get; } = new List<WorkItem>();
         public List<WorkItem> Today { get; } = new List<WorkItem>();
         public List<WorkItem> WorkItems { get; } = new List<WorkItem>();
-        public DateTimeOffset TodayDate { get; }
+        public DateTimeOffset TodayMidnight { get; }
+        public DateOnly TodayDay { get; }
 
         public void SetWorkItems(List<WorkItem> workItems)
         {
@@ -35,15 +33,15 @@ namespace AutoScrum.Services
             // All in-progress work items should be added for today.
             // All recently completed work items should be moved to yesterday.
             // All in-progress work items that older than a day, should be added to yesterday.
-            var yesterday = _dateService.GetPreviousWorkData(TodayDate);
+            var yesterday = _dateService.GetPreviousWorkDate(TodayDay);
             foreach (var wi in allWorkItems.Where(x => x.State == "In Progress" || x.State == "Done"))
             {
-                bool hasChangedRecently = wi.StateChangeDate > yesterday && wi.StateChangeDate < TodayDate;
+                bool hasChangedRecently = wi.StateChangeDate > yesterday && wi.StateChangeDate < TodayMidnight;
                 if (wi.State == "In Progress")
                 {
                     AddToday(wi);
 
-                    if (wi.StateChangeDate < TodayDate)
+                    if (wi.StateChangeDate < TodayMidnight)
                     {
                         AddYesterday(wi);
                     }
@@ -126,10 +124,10 @@ namespace AutoScrum.Services
 
         public string GenerateReport(bool isMarkdown = true)
         {
-            var yesterday = _dateService.GetPreviousWorkData(TodayDate);
+            var yesterday = _dateService.GetPreviousWorkDay(TodayDay);
             return isMarkdown
-                ? DailyScrumGenerator.GenerateMarkdownReport(TodayDate, yesterday, Today, Yesterday)
-                : DailyScrumGenerator.GeneratePlainTextReport(TodayDate, yesterday, Today, Yesterday);
+                ? DailyScrumGenerator.GenerateMarkdownReport(TodayDay, yesterday, Today, Yesterday)
+                : DailyScrumGenerator.GeneratePlainTextReport(TodayDay, yesterday, Today, Yesterday);
         }
     }
 }
