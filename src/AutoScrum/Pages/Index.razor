@@ -106,7 +106,7 @@
                 <CardTitle>Today</CardTitle>
             </CardHeader>
             <CardBody>
-                <WorkItemListComponent WorkItems="@_dailyScrum.Today" IsOnBoard=false OnRemove="wi => RemoveWorkItem(wi, false)"></WorkItemListComponent>
+                <WorkItemListComponent WorkItems="@_dailyScrum.Today" IsOnBoard=false OnRemove="wi => RemoveWorkItem(wi, true)"></WorkItemListComponent>
             </CardBody>
         </Card>
     </Column>
