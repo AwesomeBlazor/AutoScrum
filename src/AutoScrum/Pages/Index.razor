@@ -1,6 +1,7 @@
 ﻿@page "/"
 @using AutoScrum.Components
-@inject HttpClient _httpClient
+@using AutoScrum.Core.Models
+@using AutoScrum.Models
 
 <h1>Ready, Set... ENGAGE!</h1>
 
@@ -65,6 +66,18 @@
                         </Field>
                     </Validation>
 
+                    <Validation Validator="@ValidationRule.None">
+                        <Field Horizontal="true">
+                            <FieldLabel ColumnSize="ColumnSize.Is2">Generate for @(ConnectionInfo.TeamFilterBy)</FieldLabel>
+                            <FieldBody ColumnSize="ColumnSize.Is10">
+                                <RadioGroup TValue="TeamFilterBy" Name="colors" Buttons="true" @bind-CheckedValue="@(ConnectionInfo.TeamFilterBy)" onchange="">
+                                    <Radio TValue="TeamFilterBy" Value="@(TeamFilterBy.Me)">Just me</Radio>
+                                    <Radio TValue="TeamFilterBy" Value="@(TeamFilterBy.Team)">Team</Radio>
+                                </RadioGroup>
+                            </FieldBody>
+						</Field>
+					</Validation>
+
                 </Validations>
                 <Field Horizontal="true" JustifyContent="JustifyContent.Start">
                     <FieldBody ColumnSize="ColumnSize.Is2">
@@ -77,6 +90,21 @@
         </Card>
     </Column>
 </Row>
+
+@* In case we decide to be able to manage this user by user *@
+@*@if (Users?.Count > 0 && SelectedUser != null)
+{
+    <h3>Selected user</h3>
+<Select TValue="User" SelectedValue="@SelectedUser" SelectedValueChanged="@OnSelectedValueChanged">
+    @foreach (User user in Users)
+    {
+        <SelectItem TValue="User" Value="@user">@user.DisplayName</SelectItem>
+    }
+</Select>
+}*@
+
+@if (!IsPageInitializing)
+{
 <Row>
     <Column>
         <Card Margin="Margin.Is4.OnY">
@@ -123,3 +151,4 @@
         </Card>
     </Column>
 </Row>
+}

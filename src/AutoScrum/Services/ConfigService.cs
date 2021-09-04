@@ -1,7 +1,5 @@
 ﻿using AutoScrum.AzureDevOps.Models;
 using Blazored.LocalStorage;
-using System;
-using System.Threading.Tasks;
 
 namespace AutoScrum.Services
 {

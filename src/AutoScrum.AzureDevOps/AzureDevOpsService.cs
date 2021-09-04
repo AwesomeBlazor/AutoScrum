@@ -1,16 +1,12 @@
 ﻿using AutoScrum.AzureDevOps.Config;
 using AutoScrum.AzureDevOps.Models;
 using AutoScrum.AzureDevOps.Utils;
+using AutoScrum.Core.Models;
 using Microsoft.TeamFoundation.Work.WebApi;
 using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
 using System.Data;
-using System.Linq;
-using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
-using System.Threading.Tasks;
 using AzureDevOpsWorkItem = Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItem;
 using WorkItemModel = AutoScrum.AzureDevOps.Models.WorkItem;
 
@@ -60,9 +56,9 @@ namespace AutoScrum.AzureDevOps
             return currentSprint;
         }
 
-        public async Task<List<WorkItemModel>?> GetWorkItemsForSprint(Guid sprintId)
+        public async Task<List<WorkItemModel>?> GetWorkItemsForSprint(Sprint sprint)
         {
-            HttpResponseMessage? result = await _httpClient.GetAsync(new Uri(_config.OrganizationUrl, $"/DefaultCollection/{_config.Project}/_apis/work/teamsettings/iterations/{sprintId}/workitems?api-version=6.0-Preview.1"));
+            HttpResponseMessage? result = await _httpClient.GetAsync(new Uri(_config.OrganizationUrl, $"/DefaultCollection/{_config.Project}/_apis/work/teamsettings/iterations/{sprint.Id}/workitems?api-version=6.0-Preview.1"));
             if ((result?.IsSuccessStatusCode) != true)
             {
                 return null;
@@ -79,13 +75,21 @@ namespace AutoScrum.AzureDevOps
             return await GetWorkItems(wiIds);
         }
 
-        public async Task<List<WorkItemModel>?> GetWorkItemsForSprintForMe(Sprint sprint)
+        public async Task<List<WorkItemModel>?> GetWorkItemsForSprint(Sprint sprint, TeamFilterBy teamFilterBy)
         {
+            string query = "SELECT [State], [Title] FROM WorkItems WHERE ";
+            if (teamFilterBy == TeamFilterBy.Me)
+            {
+                query += "[Assigned to] = @Me AND ";
+            }
+
+            // The [System.Iteration] doesn't seem to work for some reason...
+            query += $"[System.IterationPath] = '{sprint.Path}' ORDER BY [State] Asc, [Changed Date] Desc";
+
             HttpResponseMessage? result = await _httpClient.PostAsJsonAsync(new Uri(_config.OrganizationUrl, $"/DefaultCollection/{_config.Project}/_apis/wit/wiql?api-version=6.0"),
             new
             {
-                // The [System.Iteration] doesn't seem to work for some reason...
-                query = $"SELECT [State], [Title] FROM WorkItems WHERE [Assigned to] = @Me AND [System.IterationPath] = '{sprint.Path}' ORDER BY [State] Asc, [Changed Date] Desc"
+                query = query
             });
 
             if ((result?.IsSuccessStatusCode) != true)
@@ -103,10 +107,23 @@ namespace AutoScrum.AzureDevOps
             return await GetWorkItems(wiIds);
         }
 
-        public async Task<List<WorkItemModel>?> GetWorkItems(IEnumerable<int> ids, bool enableHierarchy = true)
+        public async Task<List<WorkItemModel>?> GetWorkItems(IEnumerable<int> ids, bool enableHierarchy = true, bool includeAssignTo = true, bool includeDetails = false)
         {
             string idsAsString = string.Join(",", ids.Select(x => x.ToString()));
-            string fields = "System.State,System.Reason,System.WorkItemType,System.Parent,System.IterationPath,System.CreatedDate,System.ChangedDate,System.Title,Microsoft.VSTS.Common.StateChangeDate,Microsoft.VSTS.Scheduling.Effort,System.Tags,Microsoft.VSTS.Scheduling.RemainingWork,System.RelatedLinks,System.RelatedLinkCount,System.ExternalLinkCount";
+            
+            // Minimum required.
+            string fields = "System.State,System.WorkItemType,System.Parent,System.IterationPath,System.CreatedDate,System.ChangedDate,System.Title,Microsoft.VSTS.Common.StateChangeDate";
+            if (includeAssignTo)
+            {
+                fields += ",System.AssignedTo";
+            }
+
+            if (includeDetails)
+            {
+                fields += ",System.Reason,Microsoft.VSTS.Scheduling.Effort,System.Tags,Microsoft.VSTS.Scheduling.RemainingWork,System.RelatedLinks,System.RelatedLinkCount,System.ExternalLinkCount";
+            }
+
+
             HttpResponseMessage? result = await _httpClient.GetAsync(new Uri(_config.OrganizationUrl, $"/DefaultCollection/{_config.Project}/_apis/wit/workitems?ids={idsAsString}&fields={fields}&api-version=6.0"));
             if ((result?.IsSuccessStatusCode) != true)
             {
@@ -126,7 +143,10 @@ namespace AutoScrum.AzureDevOps
                     Type = x.ParseAsString("System.WorkItemType"),
                     State = x.ParseAsString("System.State"),
                     StateChangeDate = x.ParseAsDate("Microsoft.VSTS.Common.StateChangeDate"),
+                    ChangedDate = x.ParseAsDate("System.ChangedDate"),
                     ParentId = x.ParseAsNullableInt("System.Parent"),
+                    AssignedToDisplayName = x.ParsePersonDisplayName("System.AssignedTo"),
+                    AssignedToEmail = x.ParsePersonUniqueName("System.AssignedTo"),
                     Url = x.Url
                 })
                 .ToList();

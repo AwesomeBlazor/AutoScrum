@@ -4,6 +4,7 @@ using AutoScrum.AzureDevOps;
 using AutoScrum.Services;
 using Blazorise;
 using Microsoft.AspNetCore.Components;
+using AutoScrum.Models;
 
 namespace AutoScrum.Pages
 {
@@ -11,6 +12,9 @@ namespace AutoScrum.Pages
     {
         private readonly DailyScrumService _dailyScrum = new();
 
+        public bool IsPageInitializing { get; set; } = true;
+
+        [Inject] public HttpClient HttpClient { get; set; }
         [Inject] public ConfigService ConfigService { get; set; }
 
         public MarkupString Output { get; set; } = (MarkupString)"";
@@ -18,6 +22,9 @@ namespace AutoScrum.Pages
         protected AzureDevOpsConnectionInfo ConnectionInfo { get; set; } = new AzureDevOpsConnectionInfo();
 
         Validations validations;
+
+        public List<User> Users { get; set; } = new List<User>();
+        public User SelectedUser { get; set; }
 
         protected async override Task OnInitializedAsync()
         {
@@ -37,6 +44,8 @@ namespace AutoScrum.Pages
             }
 
             await base.OnInitializedAsync();
+
+            IsPageInitializing = false;
         }
 
         async Task Submit()
@@ -76,21 +85,28 @@ namespace AutoScrum.Pages
                 OrganizationUrl = new Uri($"https://{ConnectionInfo.AzureDevOpsOrganization}.visualstudio.com"),
                 Project = ConnectionInfo.ProjectName,
                 Token = ConnectionInfo.PersonalAccessToken
-            }, _httpClient);
+            }, HttpClient);
 
             Sprint sprint = await devOpsService.GetCurrentSprint();
             Console.WriteLine("Current Sprint: " + sprint?.Name);
 
             if (sprint != null)
             {
-                var workItems = await devOpsService.GetWorkItemsForSprintForMe(sprint);
+                List<WorkItem> workItems = await devOpsService.GetWorkItemsForSprint(sprint, ConnectionInfo.TeamFilterBy);
+                Users = GetUniqueUsers(workItems);
+                if (!Users.Any())
+                {
+                    Users.Add(new User("Me", "me@me.com"));
+                }
 
                 foreach (var item in workItems)
                 {
                     Console.WriteLine($"{item.Type} {item.Id}: {item.Title}");
                 }
 
-                _dailyScrum.SetWorkItems(workItems);
+                _dailyScrum.SetWorkItems(workItems, Users);
+                SelectedUser = Users.FirstOrDefault();
+
                 UpdateOutput();
             }
             else
@@ -103,7 +119,7 @@ namespace AutoScrum.Pages
 
         public void UpdateOutput()
         {
-            string markdown = _dailyScrum.GenerateReport();
+            string markdown = _dailyScrum.GenerateReport(Users);
             string html = Markdig.Markdown.ToHtml(markdown ?? string.Empty);
             Output = (MarkupString)html;
 
@@ -135,5 +151,34 @@ namespace AutoScrum.Pages
 
             UpdateOutput();
         }
+
+        private List<User> GetUniqueUsers(List<WorkItem> workItems)
+        {
+            Dictionary<string, User> users = new();
+            foreach (WorkItem wi in workItems.Where(x => !string.IsNullOrWhiteSpace(x.AssignedToEmail)))
+            {
+                if (!users.ContainsKey(wi.AssignedToEmail))
+                {
+                    users.Add(wi.AssignedToEmail, new User
+                    {
+                        DisplayName = wi.AssignedToDisplayName,
+                        Email = wi.AssignedToEmail
+                    });
+                }
+            }
+
+            return users.Select(x => x.Value).ToList();
+        }
+
+        //private void OnSelectedValueChanged(User user)
+        //{
+        //    if (user != null)
+        //    {
+        //        SelectedUser = user;
+        //        _dailyScrum.ChangeUser(user.Email);
+
+        //        UpdateOutput();
+        //    }
+        //}
     }
 }
