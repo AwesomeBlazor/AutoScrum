@@ -1,37 +1,71 @@
 ﻿using AutoScrum.AzureDevOps.Models;
+using AutoScrum.Models;
 
 namespace AutoScrum.Services
 {
     public static class DailyScrumGenerator
     {
-        public static string GenerateMarkdownReport(DateOnly todayDay, DateOnly previousDay, List<WorkItem> today, List<WorkItem> yesterday)
+        public static string GenerateMarkdownReport(DateOnly todayDay, DateOnly previousDay, List<WorkItem> today, List<WorkItem> yesterday, List<User> users)
         {
-            // All days except for Monday will have "Yesterday", otherwise "Friday".
-            // NOTE: MVP doesn't support flexible dates like not working on project for X day and then coming back. (or work on weekends)
-            string previousDayName = "Yesterday";
-            if (previousDay.DayOfWeek == DayOfWeek.Friday)
+            bool isTeam = users?.Count > 1;
+            string dailyScrumReport = string.Empty;
+            if (isTeam)
             {
-                previousDayName = "Friday";
+                dailyScrumReport = "## Team Daily Scrum" + Environment.NewLine + Environment.NewLine;
             }
 
-            string output = GenerateDayMarkdownReport(previousDayName, yesterday);
-            if (!string.IsNullOrWhiteSpace(output))
+            foreach (var user in users)
             {
-                output += $"{Environment.NewLine}{Environment.NewLine}";
+                string userDailyScrum = string.Empty;
+                // All days except for Monday will have "Yesterday", otherwise "Friday".
+                // NOTE: MVP doesn't support flexible dates like not working on project for X day and then coming back. (or work on weekends)
+                string previousDayName = "Yesterday";
+                if (previousDay.DayOfWeek == DayOfWeek.Friday)
+                {
+                    previousDayName = "Friday";
+                }
+
+                string report = GenerateDayMarkdownReport(previousDayName, yesterday, user.Email);
+                if (!string.IsNullOrWhiteSpace(report))
+                {
+                    userDailyScrum += $"{report}{Environment.NewLine}{Environment.NewLine}";
+                }
+
+                report = GenerateDayMarkdownReport("Today", today, user.Email);
+                if (!string.IsNullOrWhiteSpace(report))
+                {
+                    userDailyScrum += $"{report}{Environment.NewLine}{Environment.NewLine}";
+                }
+
+                if (!string.IsNullOrWhiteSpace(userDailyScrum))
+                {
+                    if (isTeam)
+                    {
+                        userDailyScrum = "### " + user.DisplayName + Environment.NewLine + Environment.NewLine + userDailyScrum;
+                    }
+
+                    dailyScrumReport += userDailyScrum;
+                }
             }
 
-            output += GenerateDayMarkdownReport("Today", today);
-
-            return output;
+            return dailyScrumReport;
         }
 
-        private static string GenerateDayMarkdownReport(string day, List<WorkItem> workItems)
+        private static string GenerateDayMarkdownReport(string day, IEnumerable<WorkItem> workItems, string userEmail)
         {
             if (workItems.Any())
             {
                 string report = $"**{day}**{Environment.NewLine}";
+                bool hasWork = false;
                 foreach (var wi in workItems)
                 {
+                    var userTaks = wi.Children.Where(x => x.AssignedToEmail == userEmail).ToList();
+                    if (wi.AssignedToEmail != null && !userTaks.Any())
+                    {
+                        continue;
+                    }
+
+                    hasWork = true;
                     string state = wi.State;
                     if (wi.State is not ("In Progress" or "Done"))
                     {
@@ -41,13 +75,16 @@ namespace AutoScrum.Services
 
                     report += $"- {state} - [{wi.Type} {wi.Id}]({wi.Url}): {wi.Title}{Environment.NewLine}";
 
-                    foreach (var child in wi.Children)
+                    foreach (var child in userTaks)
                     {
                         report += $"   - {child.State} - [{child.Type} {child.Id}]({child.Url}): {child.Title}{Environment.NewLine}";
                     }
                 }
 
-                return report;
+                if (hasWork)
+                {
+                    return report;
+                }
             }
 
             return string.Empty;

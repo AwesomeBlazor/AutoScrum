@@ -1,10 +1,11 @@
 ﻿using AutoScrum.AzureDevOps.Models;
+using AutoScrum.Models;
 
 namespace AutoScrum.Services
 {
     public class DailyScrumService
     {
-        private readonly DateService _dateService = new DateService();
+        private readonly DateService _dateService = new();
 
         public DailyScrumService()
         {
@@ -12,14 +13,17 @@ namespace AutoScrum.Services
             TodayDay = _dateService.GetToday();
         }
 
+        public List<PersonDailyScrum> TeamsDailyScrum { get; } = new List<PersonDailyScrum>();
+
         public List<WorkItem> Yesterday { get; } = new List<WorkItem>();
         public List<WorkItem> Today { get; } = new List<WorkItem>();
         public List<WorkItem> WorkItems { get; } = new List<WorkItem>();
         public DateTimeOffset TodayMidnight { get; }
         public DateOnly TodayDay { get; }
 
-        public void SetWorkItems(List<WorkItem> workItems)
+        public void SetWorkItems(List<WorkItem> workItems, List<User> users)
         {
+            TeamsDailyScrum.Clear();
             Yesterday.Clear();
             Today.Clear();
             WorkItems.Clear();
@@ -27,28 +31,31 @@ namespace AutoScrum.Services
             WorkItems.AddRange(workItems);
 
             // Check auto-add against all work items.
-            var allWorkItems = WorkItems.ToList() ;
+            var allWorkItems = WorkItems.ToList();
             allWorkItems.AddRange(workItems.SelectMany(x => x.Children));
 
             // All in-progress work items should be added for today.
             // All recently completed work items should be moved to yesterday.
             // All in-progress work items that older than a day, should be added to yesterday.
-            var yesterday = _dateService.GetPreviousWorkDate(TodayDay);
-            foreach (var wi in allWorkItems.Where(x => x.StateType is StateType.InProgress or StateType.Done))
+            DateTime yesterday = _dateService.GetPreviousWorkDate(TodayDay);
+            foreach (User user in users)
             {
-                bool hasChangedRecently = wi.StateChangeDate > yesterday && wi.StateChangeDate < TodayMidnight;
-                if (wi.StateType == StateType.InProgress)
+                foreach (var wi in allWorkItems.Where(x => x.StateType is StateType.InProgress or StateType.Done && x.AssignedToEmail == user.Email))
                 {
-                    AddToday(wi);
+                    bool hasChangedRecently = wi.StateChangeDate > yesterday && wi.StateChangeDate < TodayMidnight;
+                    if (wi.StateType == StateType.InProgress)
+                    {
+                        AddToday(wi);
 
-                    if (wi.StateChangeDate < TodayMidnight)
+                        if (wi.StateChangeDate < TodayMidnight)
+                        {
+                            AddYesterday(wi);
+                        }
+                    }
+                    else if (hasChangedRecently)
                     {
                         AddYesterday(wi);
                     }
-                }
-                else if (hasChangedRecently)
-                {
-                    AddYesterday(wi);
                 }
             }
         }
@@ -122,11 +129,11 @@ namespace AutoScrum.Services
             return parent;
         }
 
-        public string GenerateReport(bool isMarkdown = true)
+        public string GenerateReport(List<User> users, bool isMarkdown = true)
         {
             var yesterday = _dateService.GetPreviousWorkDay(TodayDay);
             return isMarkdown
-                ? DailyScrumGenerator.GenerateMarkdownReport(TodayDay, yesterday, Today, Yesterday)
+                ? DailyScrumGenerator.GenerateMarkdownReport(TodayDay, yesterday, Today, Yesterday, users)
                 : DailyScrumGenerator.GeneratePlainTextReport(TodayDay, yesterday, Today, Yesterday);
         }
     }

@@ -10,6 +10,9 @@ namespace AutoScrum.AzureDevOps.Models
         public string? Type { get; set; }
         public string? State { get; set; }
         public string? Title { get; set; }
+        public string? AssignedToDisplayName { get; set; }
+        public string? AssignedToEmail { get; set; }
+        public DateTimeOffset? ChangedDate { get; set; }
         public DateTimeOffset? StateChangeDate { get; set; }
         public string Url { get; set; } = string.Empty;
         public WorkItem? Parent { get; set; } = null;
@@ -48,6 +51,9 @@ namespace AutoScrum.AzureDevOps.Models
                 StateChangeDate = StateChangeDate,
                 Url = Url,
                 ParentId = ParentId,
+                ChangedDate = ChangedDate,
+                AssignedToDisplayName = AssignedToDisplayName,
+                AssignedToEmail = AssignedToEmail
             };
 
         public string TypeCss => WorkItemType switch

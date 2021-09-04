@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Globalization;
 using AzureDevOpsWorkItem = Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItem;
 
 namespace AutoScrum.AzureDevOps.Utils
@@ -31,9 +32,29 @@ namespace AutoScrum.AzureDevOps.Utils
                 return default;
             }
 
-            return DateTimeOffset.TryParse(value.ToString(), out DateTimeOffset date)
+            return DateTimeOffset.TryParse(value.ToString(), CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out DateTimeOffset date)
                 ? (DateTimeOffset?)date
                 : default;
+        }
+
+        public static string ParsePersonDisplayName(this AzureDevOpsWorkItem wi, string key)
+        {
+            if (!wi.Fields.TryGetValue(key, out object? value) || value is not Microsoft.VisualStudio.Services.WebApi.IdentityRef identity)
+            {
+                return default;
+            }
+
+            return identity.DisplayName;
+        }
+
+        public static string ParsePersonUniqueName(this AzureDevOpsWorkItem wi, string key)
+        {
+            if (!wi.Fields.TryGetValue(key, out object? value) || value is not Microsoft.VisualStudio.Services.WebApi.IdentityRef identity)
+            {
+                return default;
+            }
+
+            return identity.UniqueName;
         }
     }
 }
