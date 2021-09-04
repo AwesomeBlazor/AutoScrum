@@ -3,7 +3,15 @@
 <ListGroupItem>
     <Field Horizontal="true" Padding="Padding.Is0.OnAll" Margin="Margin.Is0.FromBottom">
         <FieldBody ColumnSize="ColumnSize.Is9" Class="@WorkItem.TypeCss" Padding="Padding.Is1.FromBottom">
-            #@(WorkItem.Id) @(WorkItem.Title)
+            <a href="@WorkItem.Url">#@(WorkItem.Id)</a> @(WorkItem.Title)<br />
+            @if (!string.IsNullOrWhiteSpace(WorkItem.AssignedToDisplayName))
+            {
+                <Span>Assigned to <span class="workItemValue">@(WorkItem.AssignedToDisplayName)</span>,</Span>
+            }
+            @if (!string.IsNullOrWhiteSpace(WorkItem.AssignedToDisplayName))
+            {
+                <Span> Changed at <span class="workItemValue">@(WorkItem.ChangedDate.Value.LocalDateTime.ToString("g"))</span></Span>
+            }
         </FieldBody>
         @if (HasYesterdayButton)
         {
