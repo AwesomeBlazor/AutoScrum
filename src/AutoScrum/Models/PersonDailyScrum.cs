@@ -1,4 +1,5 @@
-﻿using AutoScrum.AzureDevOps.Models;
+﻿using System.Collections.Generic;
+using AutoScrum.AzureDevOps.Models;
 
 namespace AutoScrum.Models;
 
