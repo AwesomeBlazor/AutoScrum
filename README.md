@@ -1,4 +1,4 @@
-[![.NET](https://github.com/jernejk/AutoScrum/actions/workflows/dotnet.yml/badge.svg)](https://github.com/jernejk/AutoScrum/actions/workflows/dotnet.yml)
+[![.NET](https://github.com/jernejk/AutoScrum/actions/workflows/azure-static-web-apps-gentle-meadow-0d236b010.yml/badge.svg)](https://github.com/jernejk/AutoScrum/actions/workflows/dotnet.yml)
 
 # AutoScrum
 
