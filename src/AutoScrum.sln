@@ -11,6 +11,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Project Files", "Project Fi
 		..\.github\workflows\azure-static-web-apps-gentle-meadow-0d236b010.yml = ..\.github\workflows\azure-static-web-apps-gentle-meadow-0d236b010.yml
 		..\create-az-resources.ps1 = ..\create-az-resources.ps1
 		..\README.md = ..\README.md
+		global.json = global.json
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AutoScrum.AzureDevOps", "AutoScrum.AzureDevOps\AutoScrum.AzureDevOps.csproj", "{DB549677-BFBD-4C81-A1A2-7E9473FC03A3}"
