@@ -1,4 +1,9 @@
-﻿using AutoScrum.AzureDevOps.Config;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net.Http;
+using System.Threading.Tasks;
+using AutoScrum.AzureDevOps.Config;
 using AutoScrum.AzureDevOps.Models;
 using AutoScrum.AzureDevOps;
 using AutoScrum.Services;

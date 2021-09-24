@@ -1,12 +1,17 @@
-﻿using AutoScrum.AzureDevOps.Config;
+﻿using System;
+using System.Collections.Generic;
+using AutoScrum.AzureDevOps.Config;
 using AutoScrum.AzureDevOps.Models;
 using AutoScrum.AzureDevOps.Utils;
 using AutoScrum.Core.Models;
 using Microsoft.TeamFoundation.Work.WebApi;
 using Newtonsoft.Json;
 using System.Data;
+using System.Linq;
+using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
+using System.Threading.Tasks;
 using AzureDevOpsWorkItem = Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItem;
 using WorkItemModel = AutoScrum.AzureDevOps.Models.WorkItem;
 
@@ -110,7 +115,7 @@ namespace AutoScrum.AzureDevOps
         public async Task<List<WorkItemModel>?> GetWorkItems(IEnumerable<int> ids, bool enableHierarchy = true, bool includeAssignTo = true, bool includeDetails = false)
         {
             string idsAsString = string.Join(",", ids.Select(x => x.ToString()));
-            
+
             // Minimum required.
             string fields = "System.State,System.WorkItemType,System.Parent,System.IterationPath,System.CreatedDate,System.ChangedDate,System.Title,Microsoft.VSTS.Common.StateChangeDate";
             if (includeAssignTo)
