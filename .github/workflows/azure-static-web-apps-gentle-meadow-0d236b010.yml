@@ -46,11 +46,11 @@ jobs:
           ###### End of Repository/Build Configurations ######
 
   close_pull_request_job:
+    name: Close Pull Request Job
     env:
       AZURE_API_KEY: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_GENTLE_MEADOW_0D236B010 }}
     if: ${{ env.AZURE_API_KEY }} != '' && (github.event_name == 'pull_request' && github.event.action == 'closed')
     runs-on: ubuntu-latest
-    name: Close Pull Request Job
     steps:
       - name: Close Pull Request
         id: closepullrequest
