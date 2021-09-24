@@ -8,11 +8,12 @@ on:
     types: [opened, synchronize, reopened, closed]
     branches:
       - main
+      
+env:
+  AZURE_API_KEY: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_GENTLE_MEADOW_0D236B010 }}
 
 jobs:
   build_and_deploy_job:
-    env:
-      AZURE_API_KEY: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_GENTLE_MEADOW_0D236B010 }}
     if: ${{ env.AZURE_API_KEY }} != '' && (github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action != 'closed'))
     runs-on: ubuntu-latest
     name: Build and Deploy Job
@@ -46,8 +47,6 @@ jobs:
           ###### End of Repository/Build Configurations ######
 
   close_pull_request_job:
-    env:
-      AZURE_API_KEY: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_GENTLE_MEADOW_0D236B010 }}
     if: ${{ env.AZURE_API_KEY }} != '' && (github.event_name == 'pull_request' && github.event.action == 'closed')
     runs-on: ubuntu-latest
     name: Close Pull Request Job
