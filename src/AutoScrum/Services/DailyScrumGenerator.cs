@@ -17,7 +17,7 @@ namespace AutoScrum.Services
                 dailyScrumReport = "## Team Daily Scrum" + Environment.NewLine + Environment.NewLine;
             }
 
-            foreach (var user in users)
+            foreach (var user in users.Where(x => x.IncludeUser))
             {
                 string userDailyScrum = string.Empty;
                 // All days except for Monday will have "Yesterday", otherwise "Friday".
@@ -35,6 +35,12 @@ namespace AutoScrum.Services
                 }
 
                 report = GenerateDayMarkdownReport("Today", today, user.Email);
+                if (!string.IsNullOrWhiteSpace(report))
+                {
+                    userDailyScrum += $"{report}{Environment.NewLine}{Environment.NewLine}";
+                }
+
+                report = GenerateBlockersMarkdown(today, user.Blocking);
                 if (!string.IsNullOrWhiteSpace(report))
                 {
                     userDailyScrum += $"{report}{Environment.NewLine}{Environment.NewLine}";
@@ -91,6 +97,38 @@ namespace AutoScrum.Services
             }
 
             return string.Empty;
+        }
+
+        private static string GenerateBlockersMarkdown(IEnumerable<WorkItem> workItems, string blocker)
+        {
+            var blockedItems = workItems
+                .Where(x => x.IsBlocked)
+                .ToList();
+
+            blockedItems.AddRange(workItems
+                .SelectMany(x => x.Children)
+                .Where(x => x.IsBlocked));
+
+            if (!blockedItems.Any() && string.IsNullOrWhiteSpace(blocker))
+            {
+                return string.Empty;
+            }
+
+            string report = $"**Blocking**{Environment.NewLine}";
+            if (blockedItems.Any())
+            {
+                foreach (var wi in blockedItems)
+                {
+                    report += $"- [{wi.Type} {wi.Id}]({wi.Url}): {wi.Title}{Environment.NewLine}";
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(blocker))
+            {
+                report += $"- {blocker}{Environment.NewLine}";
+            }
+
+            return report;
         }
 
         public static string GeneratePlainTextReport(DateOnly todayDay, DateOnly previousDay, List<WorkItem> today, List<WorkItem> yesterday)

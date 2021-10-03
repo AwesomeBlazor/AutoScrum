@@ -24,6 +24,10 @@ namespace AutoScrum.Pages
 
         public MarkupString Output { get; set; } = (MarkupString)"";
 
+        public bool ShowUsersAndBlockers { get; set; } = false;
+        public bool ShowCurrentSprint { get; set; } = false;
+        public bool ShowYesterdayToday { get; set; } = false;
+
         protected AzureDevOpsConnectionInfo ConnectionInfo { get; set; } = new AzureDevOpsConnectionInfo();
 
         Validations validations;

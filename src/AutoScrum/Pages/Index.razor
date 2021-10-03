@@ -91,32 +91,62 @@
     </Column>
 </Row>
 
-@* In case we decide to be able to manage this user by user *@
-@*@if (Users?.Count > 0 && SelectedUser != null)
-{
-    <h3>Selected user</h3>
-<Select TValue="User" SelectedValue="@SelectedUser" SelectedValueChanged="@OnSelectedValueChanged">
-    @foreach (User user in Users)
-    {
-        <SelectItem TValue="User" Value="@user">@user.DisplayName</SelectItem>
-    }
-</Select>
-}*@
-
 @if (!IsPageInitializing)
 {
+    @if (Users?.Any() == true)
+    {
+    <Row>
+        <Column>
+            <Card Margin="Margin.Is4.OnY">
+                <CardHeader>
+                    <CardTitle>
+                        <FieldBody ColumnSize="ColumnSize.Is10">
+                            <Switch TValue="bool" @bind-Checked="ShowUsersAndBlockers">👩‍💻 Users and blocking issues</Switch>
+                        </FieldBody>
+                    </CardTitle>
+                </CardHeader>
+
+                @if (ShowUsersAndBlockers)
+                {
+                <CardBody>
+                    <UserBlocking Users=Users />
+
+                    <Button Color="Color.Primary" Clicked="@UpdateOutput">📃 Update report</Button>
+                </CardBody>
+                }
+            </Card>
+        </Column>
+    </Row>
+    }
 <Row>
     <Column>
         <Card Margin="Margin.Is4.OnY">
             <CardHeader>
-                <CardTitle>Current Sprint Work Items</CardTitle>
+                <CardTitle>
+                    <FieldBody ColumnSize="ColumnSize.Is10">
+                        <Switch TValue="bool" @bind-Checked="ShowCurrentSprint">📰 Current Sprint Work Items</Switch>
+                    </FieldBody>
+                </CardTitle>
             </CardHeader>
-            <CardBody>
-                <WorkItemListComponent WorkItems="@_dailyScrum.WorkItems" IsOnBoard=true OnYesterday=AddYesterday OnToday=AddToday></WorkItemListComponent>
-            </CardBody>
+            @if (ShowCurrentSprint)
+            {
+                <CardBody>
+                    <WorkItemListComponent WorkItems="@_dailyScrum.WorkItems" IsOnBoard=true OnYesterday=AddYesterday OnToday=AddToday></WorkItemListComponent>
+                </CardBody>
+            }
         </Card>
     </Column>
 </Row>
+
+<Row>
+    <Column>
+        <FieldBody ColumnSize="ColumnSize.Is10">
+            <Switch TValue="bool" @bind-Checked="ShowYesterdayToday">📰 Yesterday/Today list</Switch>
+        </FieldBody>
+    </Column>
+</Row>
+@if (ShowYesterdayToday)
+{
 <Row>
     <Column>
         <Card Margin="Margin.Is4.OnY">
@@ -139,6 +169,7 @@
         </Card>
     </Column>
 </Row>
+}
 <Row>
     <Column>
         <Card Margin="Margin.Is4.OnY">

@@ -1,0 +1,17 @@
+﻿@foreach (var user in Users)
+{
+    <h2>@(user.DisplayName)</h2>
+    <Field Horizontal="true">
+        <FieldLabel ColumnSize="ColumnSize.Is2">Blocking (if any)</FieldLabel>
+        <FieldBody ColumnSize="ColumnSize.Is10">
+            <MemoEdit  Placeholder="I'm blocked by..." @bind-Text="user.Blocking" Rows="2" />
+        </FieldBody>
+    </Field>
+
+    <Field Horizontal="true">
+        <FieldLabel ColumnSize="ColumnSize.Is2">Include user in report</FieldLabel>
+        <FieldBody ColumnSize="ColumnSize.Is10">
+            <Switch TValue="bool" @bind-Checked="user.IncludeUser">Include user</Switch>
+        </FieldBody>
+	</Field>
+}

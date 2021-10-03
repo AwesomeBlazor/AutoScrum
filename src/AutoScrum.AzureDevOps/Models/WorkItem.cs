@@ -5,6 +5,8 @@ namespace AutoScrum.AzureDevOps.Models
 {
     public class WorkItem
     {
+        private string? _blocked;
+
         public int? Id { get; set; }
         public string? IterationPath { get; set; }
         public string? Type { get; set; }
@@ -15,6 +17,19 @@ namespace AutoScrum.AzureDevOps.Models
         public DateTimeOffset? ChangedDate { get; set; }
         public DateTimeOffset? StateChangeDate { get; set; }
         public string Url { get; set; } = string.Empty;
+        public string? Blocked
+        {
+            get { return _blocked; }
+            set
+            {
+                _blocked = value;
+
+                // It turns out the value is either null/empty or "Yes"...
+                IsBlocked = !string.IsNullOrEmpty(_blocked);
+            }
+        }
+        public bool IsBlocked { get; set; }
+
         public WorkItem? Parent { get; set; } = null;
         public List<WorkItem> Children { get; set; } = new List<WorkItem>();
 
@@ -53,7 +68,8 @@ namespace AutoScrum.AzureDevOps.Models
                 ParentId = ParentId,
                 ChangedDate = ChangedDate,
                 AssignedToDisplayName = AssignedToDisplayName,
-                AssignedToEmail = AssignedToEmail
+                AssignedToEmail = AssignedToEmail,
+                Blocked = Blocked
             };
 
         public string TypeCss => WorkItemType switch
