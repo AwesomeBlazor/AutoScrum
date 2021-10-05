@@ -13,8 +13,8 @@ namespace AutoScrum.Services
 
         public DateTimeOffset GetPreviousWorkDate(DateTimeOffset day)
         {
-            int daysBack = -1;
-            DayOfWeek dayOfWeek = day.DayOfWeek;
+            var daysBack = -1;
+            var dayOfWeek = day.DayOfWeek;
             if (dayOfWeek is DayOfWeek.Sunday or DayOfWeek.Monday)
             {
                 daysBack -= dayOfWeek == DayOfWeek.Sunday ? 1 : 2;
@@ -25,8 +25,8 @@ namespace AutoScrum.Services
 
         public DateOnly GetPreviousWorkDay(DateOnly day)
         {
-            int daysBack = -1;
-            DayOfWeek dayOfWeek = day.DayOfWeek;
+            var daysBack = -1;
+            var dayOfWeek = day.DayOfWeek;
             if (dayOfWeek is DayOfWeek.Sunday or DayOfWeek.Monday)
             {
                 daysBack -= dayOfWeek == DayOfWeek.Sunday ? 1 : 2;

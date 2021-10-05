@@ -48,3 +48,34 @@ a, .btn-link {
     right: 0.75rem;
     top: 0.5rem;
 }
+
+.anticon-spin {
+    fill: #1b6ec2;
+}
+
+.spinner {
+    min-width: 100vw;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.bug {
+    border-left: 5px solid #CC293D;
+}
+
+.pbi {
+    border-left: 5px solid #009CCC;
+}
+
+.task {
+    border-left: 5px solid #F2CB1D;
+}
+.workItemValue {
+    color: gray;
+}
+
+.ant-list-item {
+    width: 100%;
+}

@@ -16,11 +16,11 @@ namespace AutoScrum.Services
             TodayDay = _dateService.GetToday();
         }
 
-        public List<PersonDailyScrum> TeamsDailyScrum { get; } = new List<PersonDailyScrum>();
+        public List<PersonDailyScrum> TeamsDailyScrum { get; } = new();
 
-        public List<WorkItem> Yesterday { get; } = new List<WorkItem>();
-        public List<WorkItem> Today { get; } = new List<WorkItem>();
-        public List<WorkItem> WorkItems { get; } = new List<WorkItem>();
+        public List<WorkItem> Yesterday { get; } = new();
+        public List<WorkItem> Today { get; } = new();
+        public List<WorkItem> WorkItems { get; } = new();
         public DateTimeOffset TodayMidnight { get; }
         public DateOnly TodayDay { get; }
 
@@ -40,12 +40,12 @@ namespace AutoScrum.Services
             // All in-progress work items should be added for today.
             // All recently completed work items should be moved to yesterday.
             // All in-progress work items that older than a day, should be added to yesterday.
-            DateTime yesterday = _dateService.GetPreviousWorkDate(TodayDay);
-            foreach (User user in users)
+            var yesterday = _dateService.GetPreviousWorkDate(TodayDay);
+            foreach (var user in users)
             {
                 foreach (var wi in allWorkItems.Where(x => x.StateType is StateType.InProgress or StateType.Done && x.AssignedToEmail == user.Email))
                 {
-                    bool hasChangedRecently = wi.StateChangeDate > yesterday && wi.StateChangeDate < TodayMidnight;
+                    var hasChangedRecently = wi.StateChangeDate > yesterday && wi.StateChangeDate < TodayMidnight;
                     if (wi.StateType == StateType.InProgress)
                     {
                         AddToday(wi);
@@ -82,8 +82,8 @@ namespace AutoScrum.Services
             }
             else
             {
-                int parentId = wi.ParentId.Value;
-                WorkItem parent = GetOrCloneParent(list, parentId);
+                var parentId = wi.ParentId.Value;
+                var parent = GetOrCloneParent(list, parentId);
                 if (parent == null)
                 {
                     // No parent available, add it to top level.
@@ -99,7 +99,7 @@ namespace AutoScrum.Services
         private void Remove(List<WorkItem> list, WorkItem wi)
         {
             // Remove the item if on top level.
-            WorkItem item = list.FirstOrDefault(x => x.Id == wi.Id);
+            var item = list.FirstOrDefault(x => x.Id == wi.Id);
             if (item != null)
             {
                 list.Remove(item);
@@ -117,7 +117,7 @@ namespace AutoScrum.Services
 
         private WorkItem GetOrCloneParent(List<WorkItem> list, int parentId)
         {
-            WorkItem parent = list.FirstOrDefault(x => x.Id == parentId);
+            var parent = list.FirstOrDefault(x => x.Id == parentId);
             if (parent == null)
             {
                 parent = WorkItems.FirstOrDefault(x => x.Id == parentId);

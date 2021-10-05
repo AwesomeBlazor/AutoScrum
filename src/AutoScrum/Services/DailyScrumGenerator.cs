@@ -10,8 +10,8 @@ namespace AutoScrum.Services
     {
         public static string GenerateMarkdownReport(DateOnly todayDay, DateOnly previousDay, List<WorkItem> today, List<WorkItem> yesterday, List<User> users)
         {
-            bool isTeam = users?.Count > 1;
-            string dailyScrumReport = string.Empty;
+            var isTeam = users?.Count > 1;
+            var dailyScrumReport = string.Empty;
             if (isTeam)
             {
                 dailyScrumReport = "## Team Daily Scrum" + Environment.NewLine + Environment.NewLine;
@@ -19,16 +19,16 @@ namespace AutoScrum.Services
 
             foreach (var user in users)
             {
-                string userDailyScrum = string.Empty;
+                var userDailyScrum = string.Empty;
                 // All days except for Monday will have "Yesterday", otherwise "Friday".
                 // NOTE: MVP doesn't support flexible dates like not working on project for X day and then coming back. (or work on weekends)
-                string previousDayName = "Yesterday";
+                var previousDayName = "Yesterday";
                 if (previousDay.DayOfWeek == DayOfWeek.Friday)
                 {
                     previousDayName = "Friday";
                 }
 
-                string report = GenerateDayMarkdownReport(previousDayName, yesterday, user.Email);
+                var report = GenerateDayMarkdownReport(previousDayName, yesterday, user.Email);
                 if (!string.IsNullOrWhiteSpace(report))
                 {
                     userDailyScrum += $"{report}{Environment.NewLine}{Environment.NewLine}";
@@ -58,8 +58,8 @@ namespace AutoScrum.Services
         {
             if (workItems.Any())
             {
-                string report = $"**{day}**{Environment.NewLine}";
-                bool hasWork = false;
+                var report = $"**{day}**{Environment.NewLine}";
+                var hasWork = false;
                 foreach (var wi in workItems)
                 {
                     var userTaks = wi.Children.Where(x => x.AssignedToEmail == userEmail).ToList();
@@ -69,7 +69,7 @@ namespace AutoScrum.Services
                     }
 
                     hasWork = true;
-                    string state = wi.State;
+                    var state = wi.State;
                     if (wi.State is not ("In Progress" or "Done"))
                     {
                         // Clients prefer this over "Committed" or "Approved".
@@ -97,13 +97,13 @@ namespace AutoScrum.Services
         {
             // All days except for Monday will have "Yesterday", otherwise "Friday".
             // NOTE: MVP doesn't support flexible dates like not working on project for X day and then coming back. (or work on weekends)
-            string previousDayName = "Yesterday";
+            var previousDayName = "Yesterday";
             if (previousDay.DayOfWeek == DayOfWeek.Friday)
             {
                 previousDayName = "Friday";
             }
 
-            string output = GenerateDayPlainTextReport(previousDayName, yesterday);
+            var output = GenerateDayPlainTextReport(previousDayName, yesterday);
             if (!string.IsNullOrWhiteSpace(output))
             {
                 output += Environment.NewLine;
@@ -118,7 +118,7 @@ namespace AutoScrum.Services
         {
             if (workItems.Any())
             {
-                string report = $"{day}{Environment.NewLine}";
+                var report = $"{day}{Environment.NewLine}";
                 foreach (var wi in workItems)
                 {
                     report += $"  - {wi.State} - {(wi.WorkItemType == WorkItemType.Task ? "Task " : "")}#{wi.Id}: {wi.Title}{Environment.NewLine}";
