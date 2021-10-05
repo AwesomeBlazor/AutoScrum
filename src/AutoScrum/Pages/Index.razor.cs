@@ -3,13 +3,15 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
+using AntDesign;
 using AutoScrum.AzureDevOps.Config;
 using AutoScrum.AzureDevOps.Models;
 using AutoScrum.AzureDevOps;
+using AutoScrum.Core.Models;
 using AutoScrum.Services;
-using Blazorise;
 using Microsoft.AspNetCore.Components;
 using AutoScrum.Models;
+using ConfigService = AutoScrum.Services.ConfigService;
 
 namespace AutoScrum.Pages
 {
@@ -17,21 +19,22 @@ namespace AutoScrum.Pages
     {
         private readonly DailyScrumService _dailyScrum = new();
 
-        public bool IsPageInitializing { get; set; } = true;
+        private Form<AzureDevOpsConnectionInfo> _connectionForm;
+        private bool _connectionFormLoading;
+
+        private bool IsPageInitializing { get; set; } = true;
 
         [Inject] public HttpClient HttpClient { get; set; }
         [Inject] public ConfigService ConfigService { get; set; }
+        [Inject] public MessageService MessageService { get; set; }
 
-        public MarkupString Output { get; set; } = (MarkupString)"";
+        private MarkupString Output { get; set; } = (MarkupString)"";
 
-        protected AzureDevOpsConnectionInfo ConnectionInfo { get; set; } = new AzureDevOpsConnectionInfo();
+        private AzureDevOpsConnectionInfo ConnectionInfo { get; set; } = new();
+        private List<User> Users { get; set; } = new();
+        private User SelectedUser { get; set; }
 
-        Validations validations;
-
-        public List<User> Users { get; set; } = new List<User>();
-        public User SelectedUser { get; set; }
-
-        protected async override Task OnInitializedAsync()
+        protected override async Task OnInitializedAsync()
         {
             try
             {
@@ -40,12 +43,13 @@ namespace AutoScrum.Pages
                 {
                     ConnectionInfo = config;
 
-                    await GetDataFromAzureDevOps();
+                    await GetDataFromAzureDevOpsAsync();
                 }
             }
-            catch (Exception ex)
+            catch
             {
-                Console.WriteLine(ex.ToString());
+                MessageService.Error("Critical error while loading config");
+                throw;
             }
 
             await base.OnInitializedAsync();
@@ -53,97 +57,118 @@ namespace AutoScrum.Pages
             IsPageInitializing = false;
         }
 
-        async Task Submit()
+        private async Task SubmitAsync()
         {
-            if (validations.ValidateAll())
+            _connectionFormLoading = true;
+            
+            if (_connectionForm.Validate())
             {
-                validations.ClearAll();
-                await GetDataFromAzureDevOps();
+                await GetDataFromAzureDevOpsAsync();
+                MessageService.Success("Loaded data from Azure DevOps!");
             }
             else
             {
-                Console.WriteLine("Some validations failed...");
+                MessageService.Warning("Some validations failed...");
             }
+
+            _connectionFormLoading = false;
         }
 
-        async Task SaveConfig()
+        private async Task SaveConfigAsync()
         {
-            if (validations.ValidateAll())
-            {
-                validations.ClearAll();
+            _connectionFormLoading = true;
 
+            if (_connectionForm.Validate())
+            {
                 await ConfigService.SetConfig(ConnectionInfo);
+                MessageService.Success("Config saved successfully!");
             }
+            
+            _connectionFormLoading = false;
         }
 
-        async Task DeleteConfig()
+        private async Task DeleteConfigAsync()
         {
+            _connectionFormLoading = true;
+
             await ConfigService.Clear();
+            MessageService.Success("Config deleted successfully!");
+
+            _connectionFormLoading = false;
         }
 
-        public async Task GetDataFromAzureDevOps()
+        private async Task GetDataFromAzureDevOpsAsync()
         {
-            AzureDevOpsService devOpsService = new AzureDevOpsService(new AzureDevOpsConfig
+            try
             {
-                UserEmail = ConnectionInfo.UserEmail,
-                Organization = ConnectionInfo.AzureDevOpsOrganization,
-                OrganizationUrl = new Uri($"https://{ConnectionInfo.AzureDevOpsOrganization}.visualstudio.com"),
-                Project = ConnectionInfo.ProjectName,
-                Token = ConnectionInfo.PersonalAccessToken
-            }, HttpClient);
-
-            Sprint sprint = await devOpsService.GetCurrentSprint();
-            Console.WriteLine("Current Sprint: " + sprint?.Name);
-
-            if (sprint != null)
-            {
-                List<WorkItem> workItems = await devOpsService.GetWorkItemsForSprint(sprint, ConnectionInfo.TeamFilterBy);
-                Users = GetUniqueUsers(workItems);
-                if (!Users.Any())
+                var devOpsService = new AzureDevOpsService(new AzureDevOpsConfig
                 {
-                    Users.Add(new User("Me", "me@me.com"));
+                    UserEmail = ConnectionInfo.UserEmail,
+                    Organization = ConnectionInfo.AzureDevOpsOrganization,
+                    OrganizationUrl = new Uri($"https://{ConnectionInfo.AzureDevOpsOrganization}.visualstudio.com"),
+                    Project = ConnectionInfo.ProjectName,
+                    Token = ConnectionInfo.PersonalAccessToken
+                }, HttpClient);
+
+                var sprint = await devOpsService.GetCurrentSprint();
+                Console.WriteLine("Current Sprint: " + sprint?.Name);
+
+                if (sprint != null)
+                {
+                    var workItems = await devOpsService.GetWorkItemsForSprint(sprint, ConnectionInfo.TeamFilterBy);
+                    Users = GetUniqueUsers(workItems);
+                    if (!Users.Any())
+                    {
+                        Users.Add(new User("Me", "me@me.com"));
+                    }
+
+                    foreach (var item in workItems)
+                    {
+                        Console.WriteLine($"{item.Type} {item.Id}: {item.Title}");
+                    }
+
+                    _dailyScrum.SetWorkItems(workItems, Users);
+                    SelectedUser = Users.FirstOrDefault();
+
+                    UpdateOutput();
+                }
+                else
+                {
+                    Console.WriteLine("Unable to load");
                 }
 
-                foreach (var item in workItems)
-                {
-                    Console.WriteLine($"{item.Type} {item.Id}: {item.Title}");
-                }
-
-                _dailyScrum.SetWorkItems(workItems, Users);
-                SelectedUser = Users.FirstOrDefault();
-
-                UpdateOutput();
+                StateHasChanged();
             }
-            else
+            catch
             {
-                Console.WriteLine("Unable to load");
+                MessageService.Error("Critical error while loading data from Azure DevOps");
+                throw;
             }
-
-            base.StateHasChanged();
+            
         }
 
-        public void UpdateOutput()
+        private void UpdateOutput()
         {
-            string markdown = _dailyScrum.GenerateReport(Users);
-            string html = Markdig.Markdown.ToHtml(markdown ?? string.Empty);
+            var markdown = _dailyScrum.GenerateReport(Users);
+            var html = Markdig.Markdown.ToHtml(markdown ?? string.Empty);
             Output = (MarkupString)html;
 
             StateHasChanged();
         }
 
-        public void AddYesterday(WorkItem wi)
+        private void AddYesterday(WorkItem wi)
         {
             _dailyScrum.AddYesterday(wi);
             UpdateOutput();
         }
 
-        public void AddToday(WorkItem wi)
+        private void AddToday(WorkItem wi)
         {
             _dailyScrum.AddToday(wi);
             UpdateOutput();
         }
 
-        public void RemoveWorkItem(WorkItem wi, bool isToday)
+        private void RemoveWorkItem(WorkItem wi, bool isToday)
         {
             if (isToday)
             {
@@ -160,7 +185,13 @@ namespace AutoScrum.Pages
         private List<User> GetUniqueUsers(List<WorkItem> workItems)
         {
             Dictionary<string, User> users = new();
-            foreach (WorkItem wi in workItems.Where(x => !string.IsNullOrWhiteSpace(x.AssignedToEmail)))
+
+            if (!workItems.Any())
+            {
+                return users.Values.ToList();
+            }
+            
+            foreach (var wi in workItems.Where(x => !string.IsNullOrWhiteSpace(x.AssignedToEmail)))
             {
                 if (!users.ContainsKey(wi.AssignedToEmail))
                 {
@@ -172,7 +203,7 @@ namespace AutoScrum.Pages
                 }
             }
 
-            return users.Select(x => x.Value).ToList();
+            return users.Values.ToList();
         }
 
         //private void OnSelectedValueChanged(User user)
@@ -185,5 +216,6 @@ namespace AutoScrum.Pages
         //        UpdateOutput();
         //    }
         //}
+        private string GetGenerateForLabel() => "Generate for " + ConnectionInfo.TeamFilterBy;
     }
 }

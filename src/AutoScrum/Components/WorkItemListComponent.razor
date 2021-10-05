@@ -1,20 +1,14 @@
 ﻿@using AutoScrum.AzureDevOps.Models
 
-<ListGroup Flush="true" Border="Border.Is0">
-    @if (WorkItems != null)
-    {
-        @foreach (var wi in WorkItems)
-        {
-            <WorkItemComponent WorkItem="wi" HasYesterdayButton=IsOnBoard HasTodayButton=IsOnBoard HasRemoveButton=(!IsOnBoard) OnToday=OnToday OnYesterday=OnYesterday OnRemove=OnRemove ShowChildren=ShowChildren></WorkItemComponent>
-        }
-    }
-</ListGroup>
+<AntList DataSource="WorkItems">
+    <WorkItemComponent WorkItem="context" HasYesterdayButton=IsOnBoard HasTodayButton=IsOnBoard HasRemoveButton=!IsOnBoard OnToday=OnToday OnYesterday=OnYesterday OnRemove=OnRemove ShowChildren=ShowChildren></WorkItemComponent>
+</AntList>
 
 @code {
     [Parameter] public List<WorkItem>? WorkItems { get; set; }
     [Parameter] public bool IsOnBoard { get; set; }
-    [Parameter] public Action<WorkItem>? OnToday { get; set; } = null;
-    [Parameter] public Action<WorkItem>? OnYesterday { get; set; } = null;
-    [Parameter] public Action<WorkItem>? OnRemove { get; set; } = null;
+    [Parameter] public Action<WorkItem>? OnToday { get; set; }
+    [Parameter] public Action<WorkItem>? OnYesterday { get; set; }
+    [Parameter] public Action<WorkItem>? OnRemove { get; set; }
     [Parameter] public bool ShowChildren { get; set; } = true;
 }

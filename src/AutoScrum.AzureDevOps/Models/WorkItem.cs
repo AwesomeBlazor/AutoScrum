@@ -16,7 +16,7 @@ namespace AutoScrum.AzureDevOps.Models
         public DateTimeOffset? StateChangeDate { get; set; }
         public string Url { get; set; } = string.Empty;
         public WorkItem? Parent { get; set; } = null;
-        public List<WorkItem> Children { get; set; } = new List<WorkItem>();
+        public List<WorkItem> Children { get; set; } = new();
 
         public int? ParentId { get; set; }
         public bool HasParent => ParentId.HasValue;
