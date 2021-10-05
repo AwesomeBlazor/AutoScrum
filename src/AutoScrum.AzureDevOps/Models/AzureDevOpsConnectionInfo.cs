@@ -16,7 +16,5 @@ namespace AutoScrum.AzureDevOps.Models
         [Required, DisplayName("Project")]
         public string? ProjectName { get; set; }
         public TeamFilterBy TeamFilterBy { get; set; }
-        
-        [Obsolete] public bool TeamFilterByBool { get; set; }
     }
 }
