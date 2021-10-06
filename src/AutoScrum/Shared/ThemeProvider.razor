@@ -8,12 +8,6 @@
         <link href=@($"_content/AntDesign/css/ant-design-blazor.{_themeSettings.Theme.ToString().ToLower()}.css") rel="stylesheet" />
     </HeadContent>
 }
-else
-{
-    <HeadContent>
-        <link href="_content/AntDesign/css/ant-design-blazor.css" rel="stylesheet" />
-    </HeadContent>
-}
 
 <CascadingValue Value="@this">
     @ChildContent(this)
