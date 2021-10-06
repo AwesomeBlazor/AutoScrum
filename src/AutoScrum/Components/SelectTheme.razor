@@ -23,9 +23,6 @@
         
         _themeSettings.Theme = theme;
 
-        Console.WriteLine(_themeSettings == null);
-        Console.WriteLine(_themeSettings.Theme.ToString());
-
         await _configService.SetTheme(_themeSettings);
 
         await ThemeProvider.ThemeChanged();
