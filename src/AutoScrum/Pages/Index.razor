@@ -2,91 +2,95 @@
 @using AutoScrum.Components
 @using AutoScrum.Core.Models
 
-<AntDesign.Title Level="1">
-    <div class="flex-between">
-        Ready, Set... ENGAGE!
-        <SelectTheme />
-    </div>
-</AntDesign.Title>
+<AntDesign.Row>
+    <AntDesign.Col Xxl="@ContentSpan" Xl="@ContentSpan" Lg="ContentSpan" Md="ContentSpan" Sm="24" Xs="24">
 
-<CollapsibleCard Title="Azure DevOps Connection Info" DefaultVisible>
-    @* TODO: Refactor to new component: 'ConnectionInfoForm.razor' *@
-    <Form Model="ConnectionInfo"
-          LabelColSpan="4"
-          WrapperColSpan="20"
-          @ref="_connectionForm"
-          Loading="_connectionFormLoading">
-        <FormItem>
-            <AntDesign.Input @bind-Value="context.UserEmail" Placeholder="Your email..."/>
-        </FormItem>
-        <FormItem>
-            <AntDesign.InputPassword @bind-Value="context.PersonalAccessToken" Placeholder="Your Azure DevOps Personal Access Token (PAT)"/>
-        </FormItem>
-        <FormItem>
-            <AntDesign.Input @bind-Value="context.AzureDevOpsOrganization" Placeholder="Azure DevOps Organization Name or URL"/>
-        </FormItem>
-        <FormItem>
-            <AntDesign.Input @bind-Value="context.ProjectName" Placeholder="Azure DevOps Project"/>
-        </FormItem>
-        <FormItem Label="@GetGenerateForLabel()">
-            <RadioGroup @bind-Value="context.TeamFilterBy">
-                <Radio RadioButton Value="@TeamFilterBy.Me">Just me</Radio>
-                <Radio RadioButton Value="@(TeamFilterBy.Team)">Team</Radio>
-            </RadioGroup>
-        </FormItem>
-        <FormItem WrapperColOffset="4" WrapperColSpan="20">
-            <Button Type="@ButtonType.Primary" OnClick="SubmitAsync">
-                Submit
-            </Button>
-            <Button Type="@ButtonType.Default" OnClick="SaveConfigAsync">
-                Save
-            </Button>
-            <Button Danger Type="@ButtonType.Default" OnClick="DeleteConfigAsync">
-                Delete
-            </Button>
-        </FormItem>
-    </Form>
-</CollapsibleCard>
+        <AntDesign.Title Level="1">
+            <div class="flex-between">
+                Ready, Set... ENGAGE!
+                <SelectTheme/>
+            </div>
+        </AntDesign.Title>
 
-<Divider />
+        <CollapsibleCard Title="Azure DevOps Connection Info" AnchorLink="connection-info" DefaultVisible>
+            @* TODO: Refactor to new component: 'ConnectionInfoForm.razor' *@
+            <Form Model="ConnectionInfo"
+                  LabelColSpan="4"
+                  WrapperColSpan="20"
+                  @ref="_connectionForm"
+                  Loading="_connectionFormLoading">
+                <FormItem>
+                    <AntDesign.Input @bind-Value="context.UserEmail" Placeholder="Your email..."/>
+                </FormItem>
+                <FormItem>
+                    <AntDesign.InputPassword @bind-Value="context.PersonalAccessToken" Placeholder="Your Azure DevOps Personal Access Token (PAT)"/>
+                </FormItem>
+                <FormItem>
+                    <AntDesign.Input @bind-Value="context.AzureDevOpsOrganization" Placeholder="Azure DevOps Organization Name or URL"/>
+                </FormItem>
+                <FormItem>
+                    <AntDesign.Input @bind-Value="context.ProjectName" Placeholder="Azure DevOps Project"/>
+                </FormItem>
+                <FormItem Label="@GetGenerateForLabel()">
+                    <RadioGroup @bind-Value="context.TeamFilterBy">
+                        <Radio RadioButton Value="@TeamFilterBy.Me">Just me</Radio>
+                        <Radio RadioButton Value="@TeamFilterBy.Team">Team</Radio>
+                    </RadioGroup>
+                </FormItem>
+                <FormItem WrapperColOffset="4" WrapperColSpan="20">
+                    <Button Type="@ButtonType.Primary" OnClick="SubmitAsync">
+                        Submit
+                    </Button>
+                    <Button Type="@ButtonType.Default" OnClick="SaveConfigAsync">
+                        Save
+                    </Button>
+                    <Button Danger Type="@ButtonType.Default" OnClick="DeleteConfigAsync">
+                        Delete
+                    </Button>
+                </FormItem>
+            </Form>
+        </CollapsibleCard>
 
+        <Divider/>
 
-@* In case we decide to be able to manage this user by user *@
-@*@if (Users?.Count > 0 && SelectedUser != null)
-{
-    <h3>Selected user</h3>
-<Select TValue="User" SelectedValue="@SelectedUser" SelectedValueChanged="@OnSelectedValueChanged">
-    @foreach (User user in Users)
-    {
-        <SelectItem TValue="User" Value="@user">@user.DisplayName</SelectItem>
-    }
-</Select>
-}*@
-
-@if (!IsPageInitializing)
-{
-    <CollapsibleCard Title="Current Sprint Work Items">
-        <WorkItemListComponent WorkItems="@_dailyScrum.WorkItems" IsOnBoard=true OnYesterday=AddYesterday OnToday=AddToday />
-    </CollapsibleCard>
-    
-    <Divider />
-
-    <Row>
-        <AntDesign.Col Span="12" Xl="12" Md="24" Sm="24">
-            <CollapsibleCard Title="Yesterday">
-                <WorkItemListComponent WorkItems="@_dailyScrum.Yesterday" IsOnBoard=false OnRemove="wi => RemoveWorkItem(wi, false)"></WorkItemListComponent>
+        @if (!IsPageInitializing)
+        {
+            <CollapsibleCard Title="Current Sprint Work Items" AnchorLink="current-sprint">
+                <WorkItemListComponent WorkItems="@_dailyScrum.WorkItems" IsOnBoard=true OnYesterday=AddYesterday OnToday=AddToday/>
             </CollapsibleCard>
-        </AntDesign.Col>
-        <AntDesign.Col Span="12" Xl="12" Md="24" Sm="24">
-            <CollapsibleCard Title="Today">
-                <WorkItemListComponent WorkItems="@_dailyScrum.Today" IsOnBoard=false OnRemove="wi => RemoveWorkItem(wi, true)"></WorkItemListComponent>
-            </CollapsibleCard>
-        </AntDesign.Col>
-    </Row>
 
-    <Divider />
-    
-    <CollapsibleCard Title="Output" DefaultVisible>
-        @Output
-    </CollapsibleCard>
-}
+            <Divider/>
+
+            <Row>
+                <AntDesign.Col Span="12" Xl="12" Md="24" Sm="24">
+                    <CollapsibleCard Title="Yesterday" AnchorLink="yesterday-today">
+                        <WorkItemListComponent WorkItems="@_dailyScrum.Yesterday" IsOnBoard=false OnRemove="wi => RemoveWorkItem(wi, false)"></WorkItemListComponent>
+                    </CollapsibleCard>
+                </AntDesign.Col>
+                <AntDesign.Col Span="12" Xl="12" Md="24" Sm="24">
+                    <CollapsibleCard Title="Today">
+                        <WorkItemListComponent WorkItems="@_dailyScrum.Today" IsOnBoard=false OnRemove="wi => RemoveWorkItem(wi, true)"></WorkItemListComponent>
+                    </CollapsibleCard>
+                </AntDesign.Col>
+            </Row>
+
+            <Divider/>
+
+            <CollapsibleCard Title="Output" DefaultVisible AnchorLink="output">
+                @Output
+            </CollapsibleCard>
+        }
+    </AntDesign.Col>
+    <AntDesign.Col Xxl="@AnchorSpan" Xl="@AnchorSpan" Lg="AnchorSpan" Md="AnchorSpan" Sm="0" Xs="0">
+        <Affix>
+            <Card Class="ant-card-affix">
+                <Anchor>
+                    <AnchorLink Href="/#connection-info" Title="Azure DevOps Connection Info"/>
+                    <AnchorLink Href="/#current-sprint" Title="Current Sprint Work Items"/>
+                    <AnchorLink Href="/#yesterday-today" Title="Yesterday/Today"/>
+                    <AnchorLink Href="/#output" Title="Output"/>
+                </Anchor>
+            </Card>
+        </Affix>
+    </AntDesign.Col>
+</AntDesign.Row>

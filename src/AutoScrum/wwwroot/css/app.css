@@ -85,3 +85,19 @@ a, .btn-link {
     justify-content: space-between; 
     align-items: center;
 }
+
+.work-item-card {
+    margin: 1.25rem !important;
+}
+
+.ant-card-hoverable {
+    cursor: default !important;
+}
+
+.ant-card-affix {
+    margin: 1rem !important;
+}
+
+.ant-card-affix > .ant-card-body {
+    padding: 1rem 0 1rem 1rem !important;
+}

@@ -1,7 +1,9 @@
-﻿<Card>
+﻿<Card ChildContent="@(_visible ? ChildContent : null)">
     <TitleTemplate>
         <div class="flex-between">
-            @Title
+            <span id="@AnchorLink">
+                @Title
+            </span>
             <Switch @bind-Checked="_visible">
                 <CheckedChildrenTemplate>
                     Visible
@@ -12,12 +14,6 @@
             </Switch>
         </div>
     </TitleTemplate>
-    <ChildContent>
-        @if (_visible)
-        {
-            @ChildContent
-        }
-    </ChildContent>
 </Card>
 
 @code
@@ -30,6 +26,9 @@
     
     [Parameter]
     public bool DefaultVisible { get; set; }
+    
+    [Parameter]
+    public string AnchorLink { get; set; }
 
     private bool _visible;
 
