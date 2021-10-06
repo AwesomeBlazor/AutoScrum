@@ -1,0 +1,33 @@
+﻿@using AutoScrum.Models
+@inject Services.ConfigService _configService
+
+<div style="display: flex; justify-content: center; align-items: center; flex-direction: row">
+    <Title Level="4" Style="padding: 0; margin: 0 0.5rem 0 0">Theme: </Title>
+    <EnumSelect TEnum="AntTheme" Value="AntTheme.Default" ValueChanged="ThemeChangedAsync" Style="width: 150px"/>
+</div>
+@code 
+{
+    [CascadingParameter]
+    public ThemeProvider ThemeProvider { get; set; }
+    
+    private ThemeSettings _themeSettings;
+    
+    protected override async Task OnInitializedAsync()
+    {
+        _themeSettings = await _configService.GetTheme() ?? new();
+    }
+
+    private async Task ThemeChangedAsync(AntTheme theme)
+    {
+        _themeSettings ??= new();
+        
+        _themeSettings.Theme = theme;
+
+        Console.WriteLine(_themeSettings == null);
+        Console.WriteLine(_themeSettings.Theme.ToString());
+
+        await _configService.SetTheme(_themeSettings);
+
+        await ThemeProvider.ThemeChanged();
+    }
+}
