@@ -1,8 +1,11 @@
 ﻿@using AutoScrum.AzureDevOps.Models
 
-<AntList DataSource="WorkItems">
-    <WorkItemComponent WorkItem="context" HasYesterdayButton=IsOnBoard HasTodayButton=IsOnBoard HasRemoveButton=!IsOnBoard OnToday=OnToday OnYesterday=OnYesterday OnRemove=OnRemove ShowChildren=ShowChildren></WorkItemComponent>
-</AntList>
+@if (WorkItems?.Any() ?? false)
+{
+    <AntList DataSource="WorkItems">
+        <WorkItemComponent WorkItem="context" HasYesterdayButton=IsOnBoard HasTodayButton=IsOnBoard HasRemoveButton=!IsOnBoard OnToday=OnToday OnYesterday=OnYesterday OnRemove=OnRemove ShowChildren=ShowChildren></WorkItemComponent>
+    </AntList>
+}
 
 @code {
     [Parameter] public List<WorkItem>? WorkItems { get; set; }
