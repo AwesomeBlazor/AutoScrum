@@ -79,3 +79,25 @@ a, .btn-link {
 .ant-list-item {
     width: 100%;
 }
+
+.flex-between {
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center;
+}
+
+.work-item-card {
+    margin: 1.25rem !important;
+}
+
+.ant-card-hoverable {
+    cursor: default !important;
+}
+
+.ant-card-affix {
+    margin: 1rem !important;
+}
+
+.ant-card-affix > .ant-card-body {
+    padding: 1rem 0 1rem 1rem !important;
+}

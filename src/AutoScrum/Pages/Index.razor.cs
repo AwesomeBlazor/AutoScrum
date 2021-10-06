@@ -19,6 +19,9 @@ namespace AutoScrum.Pages
     {
         private readonly DailyScrumService _dailyScrum = new();
 
+        private const int ContentSpan = 21;
+        private const int AnchorSpan = 3;
+
         private Form<AzureDevOpsConnectionInfo> _connectionForm;
         private bool _connectionFormLoading;
 

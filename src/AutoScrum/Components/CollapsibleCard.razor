@@ -1,0 +1,39 @@
+﻿<Card ChildContent="@(_visible ? ChildContent : null)">
+    <TitleTemplate>
+        <div class="flex-between">
+            <span id="@AnchorLink">
+                @Title
+            </span>
+            <Switch @bind-Checked="_visible">
+                <CheckedChildrenTemplate>
+                    Visible
+                </CheckedChildrenTemplate>
+                <UnCheckedChildrenTemplate>
+                    Hidden
+                </UnCheckedChildrenTemplate>
+            </Switch>
+        </div>
+    </TitleTemplate>
+</Card>
+
+@code
+{
+    [Parameter]
+    public RenderFragment ChildContent { get; set; }
+
+    [Parameter]
+    public string Title { get; set; }
+    
+    [Parameter]
+    public bool DefaultVisible { get; set; }
+    
+    [Parameter]
+    public string AnchorLink { get; set; }
+
+    private bool _visible;
+
+    protected override void OnInitialized()
+    {
+        _visible = DefaultVisible;
+    }
+}

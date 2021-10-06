@@ -1,55 +1,54 @@
 ﻿@using AutoScrum.AzureDevOps.Models
 
-<ListItem>
-    <div class="work-item-text">
-        <div>
-            <a href="@WorkItem.Url">#@(WorkItem.Id)</a> @(WorkItem.Title)
+<Card Hoverable="!IsChild" Class="work-item-card">
+    <TitleTemplate>
+        <div class="flex-between">
+            <div style="overflow: hidden">
+                <a href="@WorkItem.Url">#@(WorkItem.Id)</a> @(WorkItem.Title)
+            </div>
+            <div>
+                @if (HasYesterdayButton)
+                {
+                    <Button Type="@ButtonType.Link" OnClick="() => OnYesterday?.Invoke(WorkItem)">Yesterday</Button>
+                }
+                @if (HasTodayButton)
+                {
+                    <Button Type="@ButtonType.Link" OnClick="() => OnToday?.Invoke(WorkItem)">Today</Button>
+                }
+                @if (HasRemoveButton)
+                {
+                    <Button Type="@ButtonType.Link" Danger OnClick="() => OnRemove?.Invoke(WorkItem)">Remove</Button>
+                }
+            </div>
         </div>
-        <div>
-            @if (!string.IsNullOrWhiteSpace(WorkItem.AssignedToDisplayName))
-            {
-                <span>Assigned to <span class="workItemValue">@(WorkItem.AssignedToDisplayName)</span></span>
-            }
-            @if (!string.IsNullOrWhiteSpace(WorkItem.AssignedToDisplayName))
-            {
-                <span> Changed at <span class="workItemValue">@(WorkItem.ChangedDate.Value.LocalDateTime.ToString("g"))</span></span>
-            }
+    </TitleTemplate>
+    <ChildContent>
+        <div class="work-item-text">
+            <div>
+                @if (!string.IsNullOrWhiteSpace(WorkItem.AssignedToDisplayName))
+                {
+                    <span>Assigned to <span class="workItemValue">@(WorkItem.AssignedToDisplayName)</span></span>
+                    <span> Changed at <span class="workItemValue">@(WorkItem.ChangedDate?.LocalDateTime.ToString("g") ?? "N/A")</span></span>
+                }
+            </div>
         </div>
-    </div>
-    <div>
-        @if (HasYesterdayButton)
+        @if (ShowChildren && WorkItem?.Children?.Any() == true)
         {
-            <Button Type="@ButtonType.Link" OnClick="() => OnYesterday?.Invoke(WorkItem)">Yesterday</Button>
+            <WorkItemListComponent IsChild WorkItems="WorkItem.Children" IsOnBoard="IsOnBoard" OnToday=OnToday OnYesterday=OnYesterday OnRemove=OnRemove Inline></WorkItemListComponent>
         }
-        @if (HasTodayButton)
-        {
-            <Button Type="@ButtonType.Link" OnClick="() => OnToday?.Invoke(WorkItem)">Today</Button>
-        }
-        @if (HasRemoveButton)
-        {
-            <Button Type="@ButtonType.Link" Danger OnClick="() => OnRemove?.Invoke(WorkItem)">Remove</Button>
-        }
-    </div>
-</ListItem>
-
-@if (ShowChildren && WorkItem?.Children?.Any() == true)
-{
-    <Card Bordered>
-        <AntList DataSource="WorkItem.Children" Context="childContext">
-            <ListItem>
-                <WorkItemComponent WorkItem="childContext" HasYesterdayButton=HasYesterdayButton HasTodayButton=HasTodayButton HasRemoveButton=HasRemoveButton OnToday=OnToday OnYesterday=OnYesterday OnRemove=OnRemove></WorkItemComponent>
-            </ListItem>
-        </AntList>
-    </Card>
-}
-
+    </ChildContent>
+</Card>
 @code {
     [Parameter] public WorkItem? WorkItem { get; set; }
-    [Parameter] public bool HasTodayButton { get; set; } = true;
-    [Parameter] public bool HasYesterdayButton { get; set; } = true;
-    [Parameter] public bool HasRemoveButton { get; set; } = true;
+    [Parameter] public bool IsOnBoard { get; set; }
     [Parameter] public Action<WorkItem>? OnToday { get; set; }
     [Parameter] public Action<WorkItem>? OnYesterday { get; set; }
     [Parameter] public Action<WorkItem>? OnRemove { get; set; }
     [Parameter] public bool ShowChildren { get; set; }
+    [Parameter] public bool Inline { get; set; }
+    [Parameter] public bool IsChild { get; set; }
+
+    private bool HasTodayButton => IsOnBoard;
+    private bool HasYesterdayButton => IsOnBoard;
+    private bool HasRemoveButton => !IsOnBoard;
 }

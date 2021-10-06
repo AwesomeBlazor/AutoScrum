@@ -1,9 +1,21 @@
 ﻿@using AutoScrum.AzureDevOps.Models
 
-@if (WorkItems?.Any() ?? false)
+@if (Inline)
+{
+    if (WorkItems is not null && WorkItems.Any())
+    {
+        <div style="display: flex; flex-direction: row; justify-content: flex-start; align-items: center; flex-wrap: wrap">
+            @foreach (var workItem in WorkItems)
+            {
+                <WorkItemComponent WorkItem="workItem" IsOnBoard="IsOnBoard" IsChild="IsChild" OnToday=OnToday OnYesterday=OnYesterday OnRemove=OnRemove ShowChildren=ShowChildren Inline="Inline"></WorkItemComponent>
+            }
+        </div>
+    }
+}
+else
 {
     <AntList DataSource="WorkItems">
-        <WorkItemComponent WorkItem="context" HasYesterdayButton=IsOnBoard HasTodayButton=IsOnBoard HasRemoveButton=!IsOnBoard OnToday=OnToday OnYesterday=OnYesterday OnRemove=OnRemove ShowChildren=ShowChildren></WorkItemComponent>
+        <WorkItemComponent WorkItem="context" IsOnBoard="IsOnBoard" IsChild="IsChild" OnToday=OnToday OnYesterday=OnYesterday OnRemove=OnRemove ShowChildren=ShowChildren Inline="Inline"></WorkItemComponent>
     </AntList>
 }
 
@@ -14,4 +26,6 @@
     [Parameter] public Action<WorkItem>? OnYesterday { get; set; }
     [Parameter] public Action<WorkItem>? OnRemove { get; set; }
     [Parameter] public bool ShowChildren { get; set; } = true;
+    [Parameter] public bool Inline { get; set; }
+    [Parameter] public bool IsChild { get; set; }
 }
