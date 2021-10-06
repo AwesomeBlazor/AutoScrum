@@ -1,11 +1,11 @@
 ﻿using System;
+using System.Globalization;
 
 namespace AutoScrum.Services
 {
     public class DateService
     {
         public static TimeOnly Midnight = TimeOnly.FromTimeSpan(TimeSpan.Zero);
-
         public DateTimeOffset GetDateTimeUtc() => DateTimeOffset.UtcNow;
         public DateTimeOffset GetDateTimeLocal() => DateTimeOffset.Now;
         public DateTime GetTodayMidnight() => DateTime.Now.Date;
