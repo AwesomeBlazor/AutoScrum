@@ -2,14 +2,14 @@
 @using AutoScrum.Components
 @using AutoScrum.Core.Models
 
-<Title Level="1">
-    <div style="display: flex; justify-content: space-between; align-items: center;">
+<AntDesign.Title Level="1">
+    <div class="flex-between">
         Ready, Set... ENGAGE!
         <SelectTheme />
     </div>
-</Title>
+</AntDesign.Title>
 
-<Card Title="Azure DevOps Connection Info">
+<CollapsibleCard Title="Azure DevOps Connection Info" DefaultVisible>
     @* TODO: Refactor to new component: 'ConnectionInfoForm.razor' *@
     <Form Model="ConnectionInfo"
           LabelColSpan="4"
@@ -46,7 +46,7 @@
             </Button>
         </FormItem>
     </Form>
-</Card>
+</CollapsibleCard>
 
 <Divider />
 
@@ -65,28 +65,28 @@
 
 @if (!IsPageInitializing)
 {
-    <Card Title="Current Sprint Work Items">
+    <CollapsibleCard Title="Current Sprint Work Items">
         <WorkItemListComponent WorkItems="@_dailyScrum.WorkItems" IsOnBoard=true OnYesterday=AddYesterday OnToday=AddToday />
-    </Card>
+    </CollapsibleCard>
     
     <Divider />
 
     <Row>
         <AntDesign.Col Span="12" Xl="12" Md="24" Sm="24">
-            <Card Title="Yesterday">
+            <CollapsibleCard Title="Yesterday">
                 <WorkItemListComponent WorkItems="@_dailyScrum.Yesterday" IsOnBoard=false OnRemove="wi => RemoveWorkItem(wi, false)"></WorkItemListComponent>
-            </Card>
+            </CollapsibleCard>
         </AntDesign.Col>
         <AntDesign.Col Span="12" Xl="12" Md="24" Sm="24">
-            <Card Title="Today">
+            <CollapsibleCard Title="Today">
                 <WorkItemListComponent WorkItems="@_dailyScrum.Today" IsOnBoard=false OnRemove="wi => RemoveWorkItem(wi, true)"></WorkItemListComponent>
-            </Card>
+            </CollapsibleCard>
         </AntDesign.Col>
     </Row>
 
     <Divider />
     
-    <Card Title="Output">
+    <CollapsibleCard Title="Output" DefaultVisible>
         @Output
-    </Card>
+    </CollapsibleCard>
 }

@@ -79,3 +79,9 @@ a, .btn-link {
 .ant-list-item {
     width: 100%;
 }
+
+.flex-between {
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center;
+}
