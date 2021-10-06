@@ -1,0 +1,42 @@
+﻿@using AutoScrum.Models
+
+@inject Services.ConfigService _configService
+
+@if (_themeSettings is not null && _themeSettings.Theme is not AntTheme.Default)
+{
+    <HeadContent>
+        <link href=@($"_content/AntDesign/css/ant-design-blazor.{_themeSettings.Theme.ToString().ToLower()}.css") rel="stylesheet" />
+    </HeadContent>
+}
+else
+{
+    <HeadContent>
+        <link href="_content/AntDesign/css/ant-design-blazor.css" rel="stylesheet" />
+    </HeadContent>
+}
+
+<CascadingValue Value="@this">
+    @ChildContent(this)
+</CascadingValue>
+
+@code
+{
+    [Parameter]
+    public RenderFragment<ThemeProvider> ChildContent { get; set; }
+    
+    private ThemeSettings _themeSettings;
+
+    protected override async Task OnInitializedAsync() => await ReloadAsync();
+
+    private async Task ReloadAsync(bool forceStateChange = false)
+    {
+        _themeSettings = await _configService.GetTheme() ?? new ThemeSettings();
+
+        if (forceStateChange)
+        {
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    public async Task ThemeChanged() => await ReloadAsync(true);
+}

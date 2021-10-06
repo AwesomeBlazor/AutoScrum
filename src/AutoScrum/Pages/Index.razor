@@ -2,7 +2,12 @@
 @using AutoScrum.Components
 @using AutoScrum.Core.Models
 
-<Title Level="1">Ready, Set... ENGAGE!</Title>
+<Title Level="1">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        Ready, Set... ENGAGE!
+        <SelectTheme />
+    </div>
+</Title>
 
 <Card Title="Azure DevOps Connection Info">
     @* TODO: Refactor to new component: 'ConnectionInfoForm.razor' *@

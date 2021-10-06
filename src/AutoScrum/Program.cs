@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Net.Http;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Components.Web;
 
 namespace AutoScrum
 {
@@ -14,6 +15,7 @@ namespace AutoScrum
         {
 	        var builder = WebAssemblyHostBuilder.CreateDefault(args);
 	        builder.RootComponents.Add<App>("#app");
+	        builder.RootComponents.Add<HeadOutlet>("head::after");
 
 	        var services = builder.Services;
 
