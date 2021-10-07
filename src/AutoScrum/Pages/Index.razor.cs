@@ -27,6 +27,8 @@ namespace AutoScrum.Pages
 
         private bool IsPageInitializing { get; set; } = true;
 
+        private List<WorkItem>? _cachedWorkItems;
+
         [Inject] public HttpClient HttpClient { get; set; }
         [Inject] public ConfigService ConfigService { get; set; }
         [Inject] public MessageService MessageService { get; set; }
@@ -99,45 +101,54 @@ namespace AutoScrum.Pages
 
             _connectionFormLoading = false;
         }
+        
+        private AzureDevOpsService GetAzureDevOpsService() => new(
+            new AzureDevOpsConfig
+            {
+                UserEmail = ConnectionInfo.UserEmail,
+                Organization = ConnectionInfo.AzureDevOpsOrganization,
+                OrganizationUrl = new Uri($"https://{ConnectionInfo.AzureDevOpsOrganization}.visualstudio.com"),
+                Project = ConnectionInfo.ProjectName,
+                Token = ConnectionInfo.PersonalAccessToken
+            }, HttpClient);
+
+        private async Task<Sprint?> GetCurrentSprint(AzureDevOpsService azureDevOpsService = null)
+        {
+            azureDevOpsService ??= GetAzureDevOpsService();
+            
+            var currentSprint = await azureDevOpsService.GetCurrentSprint();
+            Console.WriteLine("Current Sprint: " + currentSprint?.Name);
+
+            return currentSprint;
+        }
+
+        private async Task<List<WorkItem>?> GetCurrentSprintWorkItems(AzureDevOpsService azureDevOpsService = null)
+        {
+            azureDevOpsService ??= GetAzureDevOpsService();
+
+            var currentSprint = await GetCurrentSprint(azureDevOpsService);
+
+            return await azureDevOpsService.GetWorkItemsForSprint(currentSprint, ConnectionInfo.TeamFilterBy);
+        }
 
         private async Task GetDataFromAzureDevOpsAsync()
         {
             try
             {
-                var devOpsService = new AzureDevOpsService(new AzureDevOpsConfig
+                var sprint = await GetCurrentSprint();
+
+                if (sprint == null)
                 {
-                    UserEmail = ConnectionInfo.UserEmail,
-                    Organization = ConnectionInfo.AzureDevOpsOrganization,
-                    OrganizationUrl = new Uri($"https://{ConnectionInfo.AzureDevOpsOrganization}.visualstudio.com"),
-                    Project = ConnectionInfo.ProjectName,
-                    Token = ConnectionInfo.PersonalAccessToken
-                }, HttpClient);
-
-                var sprint = await devOpsService.GetCurrentSprint();
-                Console.WriteLine("Current Sprint: " + sprint?.Name);
-
-                if (sprint != null)
-                {
-                    var workItems = await devOpsService.GetWorkItemsForSprint(sprint, ConnectionInfo.TeamFilterBy);
-                    Users = GetUniqueUsers(workItems);
-                    if (!Users.Any())
-                    {
-                        Users.Add(new User("Me", "me@me.com"));
-                    }
-
-                    foreach (var item in workItems)
-                    {
-                        Console.WriteLine($"{item.Type} {item.Id}: {item.Title}");
-                    }
-
-                    _dailyScrum.SetWorkItems(workItems, Users);
-                    SelectedUser = Users.FirstOrDefault();
-
-                    UpdateOutput();
+                    Console.WriteLine("Unable to load");
                 }
                 else
                 {
-                    Console.WriteLine("Unable to load");
+                    _cachedWorkItems = await GetAzureDevOpsService()
+                        .GetWorkItemsForSprint(sprint, ConnectionInfo.TeamFilterBy);
+
+                    ReloadUsers();
+                    
+                    ReloadWorkItems();
                 }
 
                 StateHasChanged();
@@ -150,9 +161,46 @@ namespace AutoScrum.Pages
             
         }
 
+        private void ReloadUsers()
+        {
+            var existingUsers = Users;
+            
+            Users = GetUniqueUsers(_cachedWorkItems);
+                    
+            if (!Users.Any())
+            {
+                Users.Add(new User("Me", "me@me.com"));
+            }
+
+            foreach (var excludedUser in existingUsers.Where(x => !x.Included))
+            {
+                var userMatch = Users.FirstOrDefault(x => x.Email == excludedUser.Email);
+
+                if (userMatch is null)
+                {
+                    continue;
+                }
+                
+                userMatch.Included = excludedUser.Included;
+            }
+        }
+        
+        private void ReloadWorkItems()
+        {
+            foreach (var item in _cachedWorkItems)
+            {
+                Console.WriteLine($"{item.Type} {item.Id}: {item.Title}");
+            }
+            
+            _dailyScrum.SetWorkItems(_cachedWorkItems, Users);
+            SelectedUser = Users.FirstOrDefault();
+
+            UpdateOutput();
+        }
+
         private void UpdateOutput()
         {
-            var markdown = _dailyScrum.GenerateReport(Users);
+            var markdown = _dailyScrum.GenerateReport(Users.Where(x => x.Included).ToList());
             var html = Markdig.Markdown.ToHtml(markdown ?? string.Empty);
             Output = (MarkupString)html;
 
@@ -207,6 +255,14 @@ namespace AutoScrum.Pages
             }
 
             return users.Values.ToList();
+        }
+
+        private async Task UserIncludeChangedAsync(User user, bool isIncluded)
+        {
+            user.Included = isIncluded;
+            
+            ReloadUsers();
+            ReloadWorkItems();
         }
 
         //private void OnSelectedValueChanged(User user)
