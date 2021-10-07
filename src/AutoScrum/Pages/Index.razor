@@ -71,6 +71,23 @@
             </CollapsibleCard>
             
             <Divider />
+
+            <CollapsibleCard Title="Blocking" AnchorLink="blocking" BodyStyle="padding: 0">
+                <Table DataSource="IncludedUsers"
+                       Responsive
+                       HidePagination>
+                    <Column Title="Name" TData="User">
+                        <Tooltip Title="context.Email">
+                            <span>@context.DisplayName</span>
+                        </Tooltip>
+                    </Column>
+                    <ActionColumn Title="Include">
+                        <TextArea Placeholder="Autosize height based on content lines" AutoSize="true" @bind-Value="context.Blocking" OnChange="OnBlockingUpdated" />
+                    </ActionColumn>
+                </Table>
+            </CollapsibleCard>
+            
+            <Divider />
             
             <CollapsibleCard Title="Current Sprint Work Items" AnchorLink="current-sprint">
                 <WorkItemListComponent WorkItems="@_dailyScrum.WorkItems" IsOnBoard=true OnYesterday=AddYesterday OnToday=AddToday/>
@@ -103,7 +120,8 @@
             <Card Class="ant-card-affix">
                 <Anchor>
                     <AnchorLink Href="/#connection-info" Title="Azure DevOps Connection Info"/>
-                    <AnchorLink Href="/user-list" Title="Users"/>
+                    <AnchorLink Href="/#user-list" Title="Users"/>
+                    <AnchorLink Href="/#blocking" Title="Blocking"/>
                     <AnchorLink Href="/#current-sprint" Title="Current Sprint Work Items"/>
                     <AnchorLink Href="/#yesterday-today" Title="Yesterday/Today"/>
                     <AnchorLink Href="/#output" Title="Output"/>

@@ -7,7 +7,6 @@ using AntDesign;
 using AutoScrum.AzureDevOps.Config;
 using AutoScrum.AzureDevOps.Models;
 using AutoScrum.AzureDevOps;
-using AutoScrum.Core.Models;
 using AutoScrum.Services;
 using Microsoft.AspNetCore.Components;
 using AutoScrum.Models;
@@ -37,6 +36,7 @@ namespace AutoScrum.Pages
 
         private AzureDevOpsConnectionInfo ConnectionInfo { get; set; } = new();
         private List<User> Users { get; set; } = new();
+        private List<User> IncludedUsers { get; set; } = new();
         private User SelectedUser { get; set; }
 
         protected override async Task OnInitializedAsync()
@@ -146,6 +146,7 @@ namespace AutoScrum.Pages
                     _cachedWorkItems = await GetAzureDevOpsService()
                         .GetWorkItemsForSprint(sprint, ConnectionInfo.TeamFilterBy);
 
+                    Users = GetUniqueUsers(_cachedWorkItems);
                     ReloadUsers();
                     
                     ReloadWorkItems();
@@ -163,26 +164,8 @@ namespace AutoScrum.Pages
 
         private void ReloadUsers()
         {
-            var existingUsers = Users;
-            
-            Users = GetUniqueUsers(_cachedWorkItems);
-                    
-            if (!Users.Any())
-            {
-                Users.Add(new User("Me", "me@me.com"));
-            }
 
-            foreach (var excludedUser in existingUsers.Where(x => !x.Included))
-            {
-                var userMatch = Users.FirstOrDefault(x => x.Email == excludedUser.Email);
-
-                if (userMatch is null)
-                {
-                    continue;
-                }
-                
-                userMatch.Included = excludedUser.Included;
-            }
+            IncludedUsers = Users.Where(x => x.Included).ToList();
         }
         
         private void ReloadWorkItems()
@@ -257,24 +240,21 @@ namespace AutoScrum.Pages
             return users.Values.ToList();
         }
 
-        private async Task UserIncludeChangedAsync(User user, bool isIncluded)
+        private Task UserIncludeChangedAsync(User user, bool isIncluded)
         {
             user.Included = isIncluded;
             
             ReloadUsers();
             ReloadWorkItems();
+
+            return Task.CompletedTask;
         }
 
-        //private void OnSelectedValueChanged(User user)
-        //{
-        //    if (user != null)
-        //    {
-        //        SelectedUser = user;
-        //        _dailyScrum.ChangeUser(user.Email);
+        private void OnBlockingUpdated()
+        {
+            UpdateOutput();
+        }
 
-        //        UpdateOutput();
-        //    }
-        //}
         private string GetGenerateForLabel() => "Generate for " + ConnectionInfo.TeamFilterBy;
     }
 }
