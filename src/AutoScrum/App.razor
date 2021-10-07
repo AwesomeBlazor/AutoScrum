@@ -1,4 +1,4 @@
-<Blazorise.ThemeProvider Theme="@theme">
+<ThemeProvider>
     <Router AppAssembly="@typeof(Program).Assembly">
         <Found Context="routeData">
             <RouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
@@ -9,11 +9,6 @@
             </LayoutView>
         </NotFound>
     </Router>
-</Blazorise.ThemeProvider>
+</ThemeProvider>
 
-@code{
-    private Theme theme = new Theme
-    {
-        // theme settings
-    };
-}
+<AntContainer />

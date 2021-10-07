@@ -1,58 +1,54 @@
 ﻿@using AutoScrum.AzureDevOps.Models
 
-<ListGroupItem>
-    <Field Horizontal="true" Padding="Padding.Is0.OnAll" Margin="Margin.Is0.FromBottom">
-        <FieldBody ColumnSize="ColumnSize.Is9" Class="@WorkItem.TypeCss" Padding="Padding.Is1.FromBottom">
-            <a href="@WorkItem.Url">#@(WorkItem.Id)</a> @(WorkItem.Title)<br />
-            @if (!string.IsNullOrWhiteSpace(WorkItem.AssignedToDisplayName))
-            {
-                <Span>Assigned to <span class="workItemValue">@(WorkItem.AssignedToDisplayName)</span>,</Span>
-            }
-            @if (!string.IsNullOrWhiteSpace(WorkItem.AssignedToDisplayName))
-            {
-                <Span> Changed at <span class="workItemValue">@(WorkItem.ChangedDate.Value.LocalDateTime.ToString("g"))</span></Span>
-            }
-        </FieldBody>
-        @if (HasYesterdayButton)
-        {
-        <FieldBody ColumnSize="ColumnSize.Is1">
-            <Blazorise.Button Clicked="() => OnYesterday?.Invoke(WorkItem)">Yesterday</Blazorise.Button>
-        </FieldBody>
-        }
-        @if (HasTodayButton)
-        {
-        <FieldBody ColumnSize="ColumnSize.Is1">
-            <Blazorise.Button Clicked="() => OnToday?.Invoke(WorkItem)">Today</Blazorise.Button>
-        </FieldBody>
-        }
-        @if (HasRemoveButton)
-        {
-        <FieldBody ColumnSize="ColumnSize.Is1">
-            <Blazorise.Button Clicked="() => OnRemove?.Invoke(WorkItem)">Remove</Blazorise.Button>
-        </FieldBody>
-        }
-    </Field>
-</ListGroupItem>
-
-@if (ShowChildren && WorkItem?.Children?.Any() == true)
-{
-    @foreach (var wi in WorkItem.Children)
-    {
-        <ListGroupItem Color="Color.Dark">
-            <div Margin="Margin.Is2.OnMobile.Is5.OnDesktop" Color="Color.Dark">
-                <WorkItemComponent WorkItem="wi" HasYesterdayButton=HasYesterdayButton HasTodayButton=HasTodayButton HasRemoveButton=HasRemoveButton OnToday=OnToday OnYesterday=OnYesterday OnRemove=OnRemove></WorkItemComponent>
+<Card Hoverable="!IsChild" Class="work-item-card">
+    <TitleTemplate>
+        <div class="flex-between">
+            <div style="overflow: hidden">
+                <a href="@WorkItem.Url">#@(WorkItem.Id)</a> @(WorkItem.Title)
             </div>
-        </ListGroupItem>
-    }
-}
-
+            <div>
+                @if (HasYesterdayButton)
+                {
+                    <Button Type="@ButtonType.Link" OnClick="() => OnYesterday?.Invoke(WorkItem)">Yesterday</Button>
+                }
+                @if (HasTodayButton)
+                {
+                    <Button Type="@ButtonType.Link" OnClick="() => OnToday?.Invoke(WorkItem)">Today</Button>
+                }
+                @if (HasRemoveButton)
+                {
+                    <Button Type="@ButtonType.Link" Danger OnClick="() => OnRemove?.Invoke(WorkItem)">Remove</Button>
+                }
+            </div>
+        </div>
+    </TitleTemplate>
+    <ChildContent>
+        <div class="work-item-text">
+            <div>
+                @if (!string.IsNullOrWhiteSpace(WorkItem.AssignedToDisplayName))
+                {
+                    <span>Assigned to <span class="workItemValue">@(WorkItem.AssignedToDisplayName)</span></span>
+                    <span> Changed at <span class="workItemValue">@(WorkItem.ChangedDate?.LocalDateTime.ToString("g") ?? "N/A")</span></span>
+                }
+            </div>
+        </div>
+        @if (ShowChildren && WorkItem?.Children?.Any() == true)
+        {
+            <WorkItemListComponent IsChild WorkItems="WorkItem.Children" IsOnBoard="IsOnBoard" OnToday=OnToday OnYesterday=OnYesterday OnRemove=OnRemove Inline></WorkItemListComponent>
+        }
+    </ChildContent>
+</Card>
 @code {
     [Parameter] public WorkItem? WorkItem { get; set; }
-    [Parameter] public bool HasTodayButton { get; set; } = true;
-    [Parameter] public bool HasYesterdayButton { get; set; } = true;
-    [Parameter] public bool HasRemoveButton { get; set; } = true;
-    [Parameter] public Action<WorkItem>? OnToday { get; set; } = null;
-    [Parameter] public Action<WorkItem>? OnYesterday { get; set; } = null;
-    [Parameter] public Action<WorkItem>? OnRemove { get; set; } = null;
+    [Parameter] public bool IsOnBoard { get; set; }
+    [Parameter] public Action<WorkItem>? OnToday { get; set; }
+    [Parameter] public Action<WorkItem>? OnYesterday { get; set; }
+    [Parameter] public Action<WorkItem>? OnRemove { get; set; }
     [Parameter] public bool ShowChildren { get; set; }
+    [Parameter] public bool Inline { get; set; }
+    [Parameter] public bool IsChild { get; set; }
+
+    private bool HasTodayButton => IsOnBoard;
+    private bool HasYesterdayButton => IsOnBoard;
+    private bool HasRemoveButton => !IsOnBoard;
 }

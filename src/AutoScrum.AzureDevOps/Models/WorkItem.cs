@@ -31,7 +31,7 @@ namespace AutoScrum.AzureDevOps.Models
         public bool IsBlocked { get; set; }
 
         public WorkItem? Parent { get; set; } = null;
-        public List<WorkItem> Children { get; set; } = new List<WorkItem>();
+        public List<WorkItem> Children { get; set; } = new();
 
         public int? ParentId { get; set; }
         public bool HasParent => ParentId.HasValue;

@@ -3,13 +3,15 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
+using AntDesign;
 using AutoScrum.AzureDevOps.Config;
 using AutoScrum.AzureDevOps.Models;
 using AutoScrum.AzureDevOps;
+using AutoScrum.Core.Models;
 using AutoScrum.Services;
-using Blazorise;
 using Microsoft.AspNetCore.Components;
 using AutoScrum.Models;
+using ConfigService = AutoScrum.Services.ConfigService;
 
 namespace AutoScrum.Pages
 {
@@ -17,25 +19,27 @@ namespace AutoScrum.Pages
     {
         private readonly DailyScrumService _dailyScrum = new();
 
-        public bool IsPageInitializing { get; set; } = true;
+        private const int ContentSpan = 21;
+        private const int AnchorSpan = 3;
+
+        private Form<AzureDevOpsConnectionInfo> _connectionForm;
+        private bool _connectionFormLoading;
+
+        private bool IsPageInitializing { get; set; } = true;
+
+        private List<WorkItem>? _cachedWorkItems;
 
         [Inject] public HttpClient HttpClient { get; set; }
         [Inject] public ConfigService ConfigService { get; set; }
+        [Inject] public MessageService MessageService { get; set; }
 
-        public MarkupString Output { get; set; } = (MarkupString)"";
+        private MarkupString Output { get; set; } = (MarkupString)"";
 
-        public bool ShowUsersAndBlockers { get; set; } = false;
-        public bool ShowCurrentSprint { get; set; } = false;
-        public bool ShowYesterdayToday { get; set; } = false;
+        private AzureDevOpsConnectionInfo ConnectionInfo { get; set; } = new();
+        private List<User> Users { get; set; } = new();
+        private User SelectedUser { get; set; }
 
-        protected AzureDevOpsConnectionInfo ConnectionInfo { get; set; } = new AzureDevOpsConnectionInfo();
-
-        Validations validations;
-
-        public List<User> Users { get; set; } = new List<User>();
-        public User SelectedUser { get; set; }
-
-        protected async override Task OnInitializedAsync()
+        protected override async Task OnInitializedAsync()
         {
             try
             {
@@ -44,12 +48,13 @@ namespace AutoScrum.Pages
                 {
                     ConnectionInfo = config;
 
-                    await GetDataFromAzureDevOps();
+                    await GetDataFromAzureDevOpsAsync();
                 }
             }
-            catch (Exception ex)
+            catch
             {
-                Console.WriteLine(ex.ToString());
+                MessageService.Error("Critical error while loading config");
+                throw;
             }
 
             await base.OnInitializedAsync();
@@ -57,37 +62,48 @@ namespace AutoScrum.Pages
             IsPageInitializing = false;
         }
 
-        async Task Submit()
+        private async Task SubmitAsync()
         {
-            if (validations.ValidateAll())
+            _connectionFormLoading = true;
+            
+            if (_connectionForm.Validate())
             {
-                validations.ClearAll();
-                await GetDataFromAzureDevOps();
+                await GetDataFromAzureDevOpsAsync();
+                MessageService.Success("Loaded data from Azure DevOps!");
             }
             else
             {
-                Console.WriteLine("Some validations failed...");
+                MessageService.Warning("Some validations failed...");
             }
+
+            _connectionFormLoading = false;
         }
 
-        async Task SaveConfig()
+        private async Task SaveConfigAsync()
         {
-            if (validations.ValidateAll())
+            _connectionFormLoading = true;
+
+            if (_connectionForm.Validate())
             {
-                validations.ClearAll();
-
                 await ConfigService.SetConfig(ConnectionInfo);
+                MessageService.Success("Config saved successfully!");
             }
+            
+            _connectionFormLoading = false;
         }
 
-        async Task DeleteConfig()
+        private async Task DeleteConfigAsync()
         {
+            _connectionFormLoading = true;
+
             await ConfigService.Clear();
-        }
+            MessageService.Success("Config deleted successfully!");
 
-        public async Task GetDataFromAzureDevOps()
-        {
-            AzureDevOpsService devOpsService = new AzureDevOpsService(new AzureDevOpsConfig
+            _connectionFormLoading = false;
+        }
+        
+        private AzureDevOpsService GetAzureDevOpsService() => new(
+            new AzureDevOpsConfig
             {
                 UserEmail = ConnectionInfo.UserEmail,
                 Organization = ConnectionInfo.AzureDevOpsOrganization,
@@ -96,58 +112,114 @@ namespace AutoScrum.Pages
                 Token = ConnectionInfo.PersonalAccessToken
             }, HttpClient);
 
-            Sprint sprint = await devOpsService.GetCurrentSprint();
-            Console.WriteLine("Current Sprint: " + sprint?.Name);
+        private async Task<Sprint?> GetCurrentSprint(AzureDevOpsService azureDevOpsService = null)
+        {
+            azureDevOpsService ??= GetAzureDevOpsService();
+            
+            var currentSprint = await azureDevOpsService.GetCurrentSprint();
+            Console.WriteLine("Current Sprint: " + currentSprint?.Name);
 
-            if (sprint != null)
-            {
-                List<WorkItem> workItems = await devOpsService.GetWorkItemsForSprint(sprint, ConnectionInfo.TeamFilterBy);
-                Users = GetUniqueUsers(workItems);
-                if (!Users.Any())
-                {
-                    Users.Add(new User("Me", "me@me.com"));
-                }
-
-                foreach (var item in workItems)
-                {
-                    Console.WriteLine($"{item.Type} {item.Id}: {item.Title}");
-                }
-
-                _dailyScrum.SetWorkItems(workItems, Users);
-                SelectedUser = Users.FirstOrDefault();
-
-                UpdateOutput();
-            }
-            else
-            {
-                Console.WriteLine("Unable to load");
-            }
-
-            base.StateHasChanged();
+            return currentSprint;
         }
 
-        public void UpdateOutput()
+        private async Task<List<WorkItem>?> GetCurrentSprintWorkItems(AzureDevOpsService azureDevOpsService = null)
         {
-            string markdown = _dailyScrum.GenerateReport(Users);
-            string html = Markdig.Markdown.ToHtml(markdown ?? string.Empty);
+            azureDevOpsService ??= GetAzureDevOpsService();
+
+            var currentSprint = await GetCurrentSprint(azureDevOpsService);
+
+            return await azureDevOpsService.GetWorkItemsForSprint(currentSprint, ConnectionInfo.TeamFilterBy);
+        }
+
+        private async Task GetDataFromAzureDevOpsAsync()
+        {
+            try
+            {
+                var sprint = await GetCurrentSprint();
+
+                if (sprint == null)
+                {
+                    Console.WriteLine("Unable to load");
+                }
+                else
+                {
+                    _cachedWorkItems = await GetAzureDevOpsService()
+                        .GetWorkItemsForSprint(sprint, ConnectionInfo.TeamFilterBy);
+
+                    ReloadUsers();
+                    
+                    ReloadWorkItems();
+                }
+
+                StateHasChanged();
+            }
+            catch
+            {
+                MessageService.Error("Critical error while loading data from Azure DevOps");
+                throw;
+            }
+            
+        }
+
+        private void ReloadUsers()
+        {
+            var existingUsers = Users;
+            
+            Users = GetUniqueUsers(_cachedWorkItems);
+                    
+            if (!Users.Any())
+            {
+                Users.Add(new User("Me", "me@me.com"));
+            }
+
+            foreach (var excludedUser in existingUsers.Where(x => !x.Included))
+            {
+                var userMatch = Users.FirstOrDefault(x => x.Email == excludedUser.Email);
+
+                if (userMatch is null)
+                {
+                    continue;
+                }
+                
+                userMatch.Included = excludedUser.Included;
+            }
+        }
+        
+        private void ReloadWorkItems()
+        {
+            foreach (var item in _cachedWorkItems)
+            {
+                Console.WriteLine($"{item.Type} {item.Id}: {item.Title}");
+            }
+            
+            _dailyScrum.SetWorkItems(_cachedWorkItems, Users);
+            SelectedUser = Users.FirstOrDefault();
+
+            UpdateOutput();
+        }
+
+        private void UpdateOutput()
+        {
+            var markdown = _dailyScrum.GenerateReport(Users.Where(x => x.Included).ToList());
+            var html = Markdig.Markdown.ToHtml(markdown ?? string.Empty);
             Output = (MarkupString)html;
 
             StateHasChanged();
         }
 
-        public void AddYesterday(WorkItem wi)
+        private void AddYesterday(WorkItem wi)
         {
             _dailyScrum.AddYesterday(wi);
             UpdateOutput();
         }
 
-        public void AddToday(WorkItem wi)
+        private void AddToday(WorkItem wi)
         {
             _dailyScrum.AddToday(wi);
             UpdateOutput();
         }
 
-        public void RemoveWorkItem(WorkItem wi, bool isToday)
+        private void RemoveWorkItem(WorkItem wi, bool isToday)
         {
             if (isToday)
             {
@@ -164,7 +236,13 @@ namespace AutoScrum.Pages
         private List<User> GetUniqueUsers(List<WorkItem> workItems)
         {
             Dictionary<string, User> users = new();
-            foreach (WorkItem wi in workItems.Where(x => !string.IsNullOrWhiteSpace(x.AssignedToEmail)))
+
+            if (!workItems.Any())
+            {
+                return users.Values.ToList();
+            }
+            
+            foreach (var wi in workItems.Where(x => !string.IsNullOrWhiteSpace(x.AssignedToEmail)))
             {
                 if (!users.ContainsKey(wi.AssignedToEmail))
                 {
@@ -176,7 +254,15 @@ namespace AutoScrum.Pages
                 }
             }
 
-            return users.Select(x => x.Value).ToList();
+            return users.Values.ToList();
+        }
+
+        private async Task UserIncludeChangedAsync(User user, bool isIncluded)
+        {
+            user.Included = isIncluded;
+            
+            ReloadUsers();
+            ReloadWorkItems();
         }
 
         //private void OnSelectedValueChanged(User user)
@@ -189,5 +275,6 @@ namespace AutoScrum.Pages
         //        UpdateOutput();
         //    }
         //}
+        private string GetGenerateForLabel() => "Generate for " + ConnectionInfo.TeamFilterBy;
     }
 }

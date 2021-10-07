@@ -11,11 +11,9 @@ on:
 
 jobs:
   build_and_deploy_job:
+    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action != 'closed')
     runs-on: ubuntu-latest
     name: Build and Deploy Job
-    env:
-      AZURE_API_KEY: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_GENTLE_MEADOW_0D236B010 }}
-    if: ${{ env.AZURE_API_KEY }} != '' && (github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action != 'closed'))
     steps:
       - uses: actions/checkout@v2
         with:
@@ -33,7 +31,7 @@ jobs:
         id: builddeploy
         uses: Azure/static-web-apps-deploy@v1
         with:
-          azure_static_web_apps_api_token: ${{ env.AZURE_API_KEY }}
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_GENTLE_MEADOW_0D236B010 }}
           repo_token: ${{ secrets.GITHUB_TOKEN }} # Used for Github integrations (i.e. PR comments)
           action: "upload"
           ###### Repository/Build Configurations - These values can be configured to match your app requirements. ######
@@ -44,17 +42,22 @@ jobs:
           # app_artifact_location: "./dist/wwwroot" # Built app content directory - optional
           output_location: "./wwwroot" # Built app content directory - optional
           ###### End of Repository/Build Configurations ######
+      - name: Clear Cloudflare Cache
+        id: clearcloudflarecache
+        uses: jakejarvis/cloudflare-purge-action@master
+        env:
+          # Zone is required by both authentication methods
+          CLOUDFLARE_ZONE: ${{ secrets.CLOUDFLARE_ZONE }}
+          CLOUDFLARE_TOKEN: ${{ secrets.CLOUDFLARE_TOKEN }}
 
   close_pull_request_job:
-    name: Close Pull Request Job
-    env:
-      AZURE_API_KEY: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_GENTLE_MEADOW_0D236B010 }}
-    if: ${{ env.AZURE_API_KEY }} != '' && (github.event_name == 'pull_request' && github.event.action == 'closed')
+    if: github.event_name == 'pull_request' && github.event.action == 'closed'
     runs-on: ubuntu-latest
+    name: Close Pull Request Job
     steps:
       - name: Close Pull Request
         id: closepullrequest
         uses: Azure/static-web-apps-deploy@v1
         with:
-          azure_static_web_apps_api_token: ${{ env.AZURE_API_KEY }}
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_GENTLE_MEADOW_0D236B010 }}
           action: "close"

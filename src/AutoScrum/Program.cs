@@ -1,13 +1,11 @@
 using AutoScrum.Services;
 using Blazored.LocalStorage;
-using Blazorise;
-using Blazorise.Bootstrap;
-using Blazorise.Icons.FontAwesome;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Net.Http;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Components.Web;
 
 namespace AutoScrum
 {
@@ -15,24 +13,25 @@ namespace AutoScrum
     {
         public static async Task Main(string[] args)
         {
-            var builder = WebAssemblyHostBuilder.CreateDefault(args);
-            builder.RootComponents.Add<App>("#app");
+	        var builder = WebAssemblyHostBuilder.CreateDefault(args);
+	        builder.RootComponents.Add<App>("#app");
+	        builder.RootComponents.Add<HeadOutlet>("head::after");
 
-            builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
-			builder.Services.AddTransient<ConfigService>();
+	        var services = builder.Services;
 
-			builder.Services
-				.AddBlazorise(options =>
-				{
-					options.ChangeTextOnKeyPress = true;
-				})				
-				.AddBootstrapProviders()
-				.AddFontAwesomeIcons()
-				.AddBlazoredLocalStorage();
+	        services.AddScoped(_ => new HttpClient
+	        {
+		        BaseAddress = new Uri(builder.HostEnvironment.BaseAddress)
+	        });
+	        services.AddTransient<ConfigService>();
 
-			var host = builder.Build();
+	        services.AddBlazoredLocalStorage();
+	        services.AddAntDesign();
 
-			await host.RunAsync();
+	        var host = builder.Build();
+
+	        await host.RunAsync();
+
         }
     }
 }

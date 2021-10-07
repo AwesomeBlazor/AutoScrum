@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 using AutoScrum.AzureDevOps.Models;
+using AutoScrum.Models;
 using Blazored.LocalStorage;
 
 namespace AutoScrum.Services
@@ -8,6 +9,8 @@ namespace AutoScrum.Services
     public class ConfigService
     {
         private const string ConfigKey = "current-config";
+        private const string ThemeKey = "current-theme";
+        
         private readonly ILocalStorageService _localStorage;
 
         public ConfigService(ILocalStorageService localStorage)
@@ -25,6 +28,23 @@ namespace AutoScrum.Services
             try
             {
                 await _localStorage.SetItemAsync(ConfigKey, config);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+            }
+        }
+        
+        public async Task<ThemeSettings> GetTheme()
+        {
+            return await _localStorage.GetItemAsync<ThemeSettings>(ThemeKey);
+        }
+
+        public async Task SetTheme(ThemeSettings theme)
+        {
+            try
+            {
+                await _localStorage.SetItemAsync(ThemeKey, theme);
             }
             catch (Exception ex)
             {

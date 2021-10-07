@@ -1,185 +1,114 @@
 ﻿@page "/"
 @using AutoScrum.Components
 @using AutoScrum.Core.Models
-@using AutoScrum.Models
 
-<h1>Ready, Set... ENGAGE!</h1>
+<AntDesign.Row>
+    <AntDesign.Col Xxl="@ContentSpan" Xl="@ContentSpan" Lg="ContentSpan" Md="24" Sm="24" Xs="24">
 
-<Row>
-    <Column>
-        <Card Margin="Margin.Is4.OnY">
-            <CardHeader>
-                <CardTitle>Azure DevOps Connection Info</CardTitle>
-            </CardHeader>
+        <AntDesign.Title Level="1">
+            <div class="flex-between">
+                Ready, Set... ENGAGE!
+                <SelectTheme/>
+            </div>
+        </AntDesign.Title>
 
-            <CardBody>
-                <Validations @ref="validations" Mode="ValidationMode.Manual" ValidateOnLoad="false">
-                    <Validation Validator="@ValidationRule.IsEmail">
-                        <Field Horizontal="true">
-                            <FieldLabel ColumnSize="ColumnSize.Is2">Email</FieldLabel>
-                            <FieldBody ColumnSize="ColumnSize.Is10">
-                                <TextEdit Placeholder="Your email..." @bind-Text="ConnectionInfo.UserEmail" Role="TextRole.Email">
-                                    <Feedback>
-                                        <ValidationError>User email is required!</ValidationError>
-                                    </Feedback>
-                                </TextEdit>
-                            </FieldBody>
-                        </Field>
-                    </Validation>
+        <CollapsibleCard Title="Azure DevOps Connection Info" AnchorLink="connection-info" DefaultVisible>
+            @* TODO: Refactor to new component: 'ConnectionInfoForm.razor' *@
+            <Form Model="ConnectionInfo"
+                  LabelColSpan="4"
+                  WrapperColSpan="20"
+                  @ref="_connectionForm"
+                  Loading="_connectionFormLoading">
+                <FormItem>
+                    <AntDesign.Input @bind-Value="context.UserEmail" Placeholder="Your email..."/>
+                </FormItem>
+                <FormItem>
+                    <AntDesign.InputPassword @bind-Value="context.PersonalAccessToken" Placeholder="Your Azure DevOps Personal Access Token (PAT)"/>
+                </FormItem>
+                <FormItem>
+                    <AntDesign.Input @bind-Value="context.AzureDevOpsOrganization" Placeholder="Azure DevOps Organization Name or URL"/>
+                </FormItem>
+                <FormItem>
+                    <AntDesign.Input @bind-Value="context.ProjectName" Placeholder="Azure DevOps Project"/>
+                </FormItem>
+                <FormItem Label="@GetGenerateForLabel()">
+                    <RadioGroup @bind-Value="context.TeamFilterBy">
+                        <Radio RadioButton Value="@TeamFilterBy.Me">Just me</Radio>
+                        <Radio RadioButton Value="@TeamFilterBy.Team">Team</Radio>
+                    </RadioGroup>
+                </FormItem>
+                <FormItem WrapperColOffset="4" WrapperColSpan="20">
+                    <Button Type="@ButtonType.Primary" OnClick="SubmitAsync">
+                        Submit
+                    </Button>
+                    <Button Type="@ButtonType.Default" OnClick="SaveConfigAsync">
+                        Save
+                    </Button>
+                    <Button Danger Type="@ButtonType.Default" OnClick="DeleteConfigAsync">
+                        Delete
+                    </Button>
+                </FormItem>
+            </Form>
+        </CollapsibleCard>
 
-                    <Validation Validator="@ValidationRule.IsNotEmpty">
-                        <Field Horizontal="true">
-                            <FieldLabel ColumnSize="ColumnSize.Is2">Access Token</FieldLabel>
-                            <FieldBody ColumnSize="ColumnSize.Is10">
-                                <TextEdit Placeholder="Your Azure DevOps Personal Access Token (PAT)..." @bind-Text="ConnectionInfo.PersonalAccessToken" Role="TextRole.Password">
-                                    <Feedback>
-                                        <ValidationError>PAT is required!</ValidationError>
-                                    </Feedback>
-                                </TextEdit>
-                            </FieldBody>
-                        </Field>
-                    </Validation>
+        <Divider/>
 
-                    <Validation Validator="@ValidationRule.IsNotEmpty">
-                        <Field Horizontal="true">
-                            <FieldLabel ColumnSize="ColumnSize.Is2">Organization</FieldLabel>
-                            <FieldBody ColumnSize="ColumnSize.Is10">
-                                <TextEdit Placeholder="Azure DevOps Organization Name or URL" @bind-Text="ConnectionInfo.AzureDevOpsOrganization">
-                                    <Feedback>
-                                        <ValidationError>Organization is required!</ValidationError>
-                                    </Feedback>
-                                </TextEdit>
-                            </FieldBody>
-                        </Field>
-                    </Validation>
+        @if (!IsPageInitializing)
+        {
+            <CollapsibleCard Title="Users" AnchorLink="user-list" BodyStyle="padding: 0">
+                <Table DataSource="Users"
+                       Responsive
+                       HidePagination>
+                    <Column Title="Name" TData="User">
+                        <Tooltip Title="context.Email">
+                            <span>@context.DisplayName</span>
+                        </Tooltip>
+                    </Column>
+                    <ActionColumn Title="Include">
+                        <Switch Checked="context.Included" CheckedChanged="async include => await UserIncludeChangedAsync(context, include)" />
+                    </ActionColumn>
+                </Table>
+            </CollapsibleCard>
+            
+            <Divider />
+            
+            <CollapsibleCard Title="Current Sprint Work Items" AnchorLink="current-sprint">
+                <WorkItemListComponent WorkItems="@_dailyScrum.WorkItems" IsOnBoard=true OnYesterday=AddYesterday OnToday=AddToday/>
+            </CollapsibleCard>
 
-                    <Validation Validator="@ValidationRule.IsNotEmpty">
-                        <Field Horizontal="true">
-                            <FieldLabel ColumnSize="ColumnSize.Is2">Project</FieldLabel>
-                            <FieldBody ColumnSize="ColumnSize.Is10">
-                                <TextEdit Placeholder="Azure DevOps Project" @bind-Text="ConnectionInfo.ProjectName">
-                                    <Feedback>
-                                        <ValidationError>Project is required!</ValidationError>
-                                    </Feedback>
-                                </TextEdit>
-                            </FieldBody>
-                        </Field>
-                    </Validation>
+            <Divider/>
 
-                    <Validation Validator="@ValidationRule.None">
-                        <Field Horizontal="true">
-                            <FieldLabel ColumnSize="ColumnSize.Is2">Generate for @(ConnectionInfo.TeamFilterBy)</FieldLabel>
-                            <FieldBody ColumnSize="ColumnSize.Is10">
-                                <RadioGroup TValue="TeamFilterBy" Name="colors" Buttons="true" @bind-CheckedValue="@(ConnectionInfo.TeamFilterBy)" onchange="">
-                                    <Radio TValue="TeamFilterBy" Value="@(TeamFilterBy.Me)">Just me</Radio>
-                                    <Radio TValue="TeamFilterBy" Value="@(TeamFilterBy.Team)">Team</Radio>
-                                </RadioGroup>
-                            </FieldBody>
-						</Field>
-					</Validation>
+            <Row>
+                <AntDesign.Col Span="12" Xl="12" Md="24" Sm="24">
+                    <CollapsibleCard Title="Yesterday" AnchorLink="yesterday-today">
+                        <WorkItemListComponent WorkItems="@_dailyScrum.Yesterday" IsOnBoard=false OnRemove="wi => RemoveWorkItem(wi, false)"></WorkItemListComponent>
+                    </CollapsibleCard>
+                </AntDesign.Col>
+                <AntDesign.Col Span="12" Xl="12" Md="24" Sm="24">
+                    <CollapsibleCard Title="Today">
+                        <WorkItemListComponent WorkItems="@_dailyScrum.Today" IsOnBoard=false OnRemove="wi => RemoveWorkItem(wi, true)"></WorkItemListComponent>
+                    </CollapsibleCard>
+                </AntDesign.Col>
+            </Row>
 
-                </Validations>
-                <Field Horizontal="true" JustifyContent="JustifyContent.Start">
-                    <FieldBody ColumnSize="ColumnSize.Is2">
-                        <Button Color="Color.Primary" Clicked="@Submit">📬 Submit</Button>
-                        <Button Color="Color.Success" Clicked="@SaveConfig">💾 Save</Button>
-                        <Button Color="Color.Danger" Clicked="@DeleteConfig">🗑 Delete</Button>
-                    </FieldBody>
-                </Field>
-            </CardBody>
-        </Card>
-    </Column>
-</Row>
+            <Divider/>
 
-@if (!IsPageInitializing)
-{
-    @if (Users?.Any() == true)
-    {
-    <Row>
-        <Column>
-            <Card Margin="Margin.Is4.OnY">
-                <CardHeader>
-                    <CardTitle>
-                        <FieldBody ColumnSize="ColumnSize.Is10">
-                            <Switch TValue="bool" @bind-Checked="ShowUsersAndBlockers">👩‍💻 Users and blocking issues</Switch>
-                        </FieldBody>
-                    </CardTitle>
-                </CardHeader>
-
-                @if (ShowUsersAndBlockers)
-                {
-                <CardBody>
-                    <UserBlocking Users=Users />
-
-                    <Button Color="Color.Primary" Clicked="@UpdateOutput">📃 Update report</Button>
-                </CardBody>
-                }
-            </Card>
-        </Column>
-    </Row>
-    }
-<Row>
-    <Column>
-        <Card Margin="Margin.Is4.OnY">
-            <CardHeader>
-                <CardTitle>
-                    <FieldBody ColumnSize="ColumnSize.Is10">
-                        <Switch TValue="bool" @bind-Checked="ShowCurrentSprint">📰 Current Sprint Work Items</Switch>
-                    </FieldBody>
-                </CardTitle>
-            </CardHeader>
-            @if (ShowCurrentSprint)
-            {
-                <CardBody>
-                    <WorkItemListComponent WorkItems="@_dailyScrum.WorkItems" IsOnBoard=true OnYesterday=AddYesterday OnToday=AddToday></WorkItemListComponent>
-                </CardBody>
-            }
-        </Card>
-    </Column>
-</Row>
-
-<Row>
-    <Column>
-        <FieldBody ColumnSize="ColumnSize.Is10">
-            <Switch TValue="bool" @bind-Checked="ShowYesterdayToday">📰 Yesterday/Today list</Switch>
-        </FieldBody>
-    </Column>
-</Row>
-@if (ShowYesterdayToday)
-{
-<Row>
-    <Column>
-        <Card Margin="Margin.Is4.OnY">
-            <CardHeader>
-                <CardTitle>Yesterday</CardTitle>
-            </CardHeader>
-            <CardBody>
-                <WorkItemListComponent WorkItems="@_dailyScrum.Yesterday" IsOnBoard=false OnRemove="wi => RemoveWorkItem(wi, false)"></WorkItemListComponent>
-            </CardBody>
-        </Card>
-    </Column>
-    <Column>
-        <Card Margin="Margin.Is4.OnY">
-            <CardHeader>
-                <CardTitle>Today</CardTitle>
-            </CardHeader>
-            <CardBody>
-                <WorkItemListComponent WorkItems="@_dailyScrum.Today" IsOnBoard=false OnRemove="wi => RemoveWorkItem(wi, true)"></WorkItemListComponent>
-            </CardBody>
-        </Card>
-    </Column>
-</Row>
-}
-<Row>
-    <Column>
-        <Card Margin="Margin.Is4.OnY">
-            <CardHeader>
-                <CardTitle>Output</CardTitle>
-            </CardHeader>
-            <CardBody>
+            <CollapsibleCard Title="Output" DefaultVisible AnchorLink="output">
                 @Output
-            </CardBody>
-        </Card>
-    </Column>
-</Row>
-}
+            </CollapsibleCard>
+        }
+    </AntDesign.Col>
+    <AntDesign.Col Xxl="@AnchorSpan" Xl="@AnchorSpan" Lg="AnchorSpan" Md="0" Sm="0" Xs="0">
+        <Affix>
+            <Card Class="ant-card-affix">
+                <Anchor>
+                    <AnchorLink Href="/#connection-info" Title="Azure DevOps Connection Info"/>
+                    <AnchorLink Href="/user-list" Title="Users"/>
+                    <AnchorLink Href="/#current-sprint" Title="Current Sprint Work Items"/>
+                    <AnchorLink Href="/#yesterday-today" Title="Yesterday/Today"/>
+                    <AnchorLink Href="/#output" Title="Output"/>
+                </Anchor>
+            </Card>
+        </Affix>
+    </AntDesign.Col>
+</AntDesign.Row>
