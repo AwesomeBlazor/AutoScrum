@@ -7,7 +7,6 @@ using AntDesign;
 using AutoScrum.AzureDevOps.Config;
 using AutoScrum.AzureDevOps.Models;
 using AutoScrum.AzureDevOps;
-using AutoScrum.Core.Models;
 using AutoScrum.Services;
 using Microsoft.AspNetCore.Components;
 using AutoScrum.Models;
@@ -37,6 +36,7 @@ namespace AutoScrum.Pages
 
         private AzureDevOpsConnectionInfo ConnectionInfo { get; set; } = new();
         private List<User> Users { get; set; } = new();
+        private List<User> IncludedUsers { get; set; } = new();
         private User SelectedUser { get; set; }
 
         protected override async Task OnInitializedAsync()
@@ -53,7 +53,7 @@ namespace AutoScrum.Pages
             }
             catch
             {
-                MessageService.Error("Critical error while loading config");
+                await MessageService.Error("Critical error while loading config");
                 throw;
             }
 
@@ -69,11 +69,11 @@ namespace AutoScrum.Pages
             if (_connectionForm.Validate())
             {
                 await GetDataFromAzureDevOpsAsync();
-                MessageService.Success("Loaded data from Azure DevOps!");
+                await MessageService.Success("Loaded data from Azure DevOps!");
             }
             else
             {
-                MessageService.Warning("Some validations failed...");
+                await MessageService.Warning("Some validations failed...");
             }
 
             _connectionFormLoading = false;
@@ -86,7 +86,7 @@ namespace AutoScrum.Pages
             if (_connectionForm.Validate())
             {
                 await ConfigService.SetConfig(ConnectionInfo);
-                MessageService.Success("Config saved successfully!");
+                await MessageService.Success("Config saved successfully!");
             }
             
             _connectionFormLoading = false;
@@ -97,7 +97,7 @@ namespace AutoScrum.Pages
             _connectionFormLoading = true;
 
             await ConfigService.Clear();
-            MessageService.Success("Config deleted successfully!");
+            await MessageService.Success("Config deleted successfully!");
 
             _connectionFormLoading = false;
         }
@@ -146,6 +146,7 @@ namespace AutoScrum.Pages
                     _cachedWorkItems = await GetAzureDevOpsService()
                         .GetWorkItemsForSprint(sprint, ConnectionInfo.TeamFilterBy);
 
+                    Users = GetUniqueUsers(_cachedWorkItems);
                     ReloadUsers();
                     
                     ReloadWorkItems();
@@ -155,7 +156,7 @@ namespace AutoScrum.Pages
             }
             catch
             {
-                MessageService.Error("Critical error while loading data from Azure DevOps");
+                await MessageService.Error("Critical error while loading data from Azure DevOps");
                 throw;
             }
             
@@ -163,26 +164,8 @@ namespace AutoScrum.Pages
 
         private void ReloadUsers()
         {
-            var existingUsers = Users;
-            
-            Users = GetUniqueUsers(_cachedWorkItems);
-                    
-            if (!Users.Any())
-            {
-                Users.Add(new User("Me", "me@me.com"));
-            }
 
-            foreach (var excludedUser in existingUsers.Where(x => !x.Included))
-            {
-                var userMatch = Users.FirstOrDefault(x => x.Email == excludedUser.Email);
-
-                if (userMatch is null)
-                {
-                    continue;
-                }
-                
-                userMatch.Included = excludedUser.Included;
-            }
+            IncludedUsers = Users.Where(x => x.Included).ToList();
         }
         
         private void ReloadWorkItems()
@@ -265,16 +248,11 @@ namespace AutoScrum.Pages
             ReloadWorkItems();
         }
 
-        //private void OnSelectedValueChanged(User user)
-        //{
-        //    if (user != null)
-        //    {
-        //        SelectedUser = user;
-        //        _dailyScrum.ChangeUser(user.Email);
+        private void OnBlockingUpdated()
+        {
+            UpdateOutput();
+        }
 
-        //        UpdateOutput();
-        //    }
-        //}
         private string GetGenerateForLabel() => "Generate for " + ConnectionInfo.TeamFilterBy;
     }
 }

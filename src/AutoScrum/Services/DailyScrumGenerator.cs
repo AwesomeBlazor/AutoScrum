@@ -17,7 +17,7 @@ namespace AutoScrum.Services
                 dailyScrumReport = "## Team Daily Scrum" + Environment.NewLine + Environment.NewLine;
             }
 
-            foreach (var user in users.Where(x => x.IncludeUser))
+            foreach (var user in users.Where(x => x.Included))
             {
                 var userDailyScrum = string.Empty;
                 // All days except for Monday will have "Yesterday", otherwise "Friday".
