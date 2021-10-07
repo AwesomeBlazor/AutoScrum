@@ -240,12 +240,14 @@ namespace AutoScrum.Pages
             return users.Values.ToList();
         }
 
-        private async Task UserIncludeChangedAsync(User user, bool isIncluded)
+        private Task UserIncludeChangedAsync(User user, bool isIncluded)
         {
             user.Included = isIncluded;
             
             ReloadUsers();
             ReloadWorkItems();
+
+            return Task.CompletedTask;
         }
 
         private void OnBlockingUpdated()
