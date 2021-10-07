@@ -3,7 +3,7 @@
 @using AutoScrum.Core.Models
 
 <AntDesign.Row>
-    <AntDesign.Col Xxl="@ContentSpan" Xl="@ContentSpan" Lg="ContentSpan" Md="ContentSpan" Sm="24" Xs="24">
+    <AntDesign.Col Xxl="@ContentSpan" Xl="@ContentSpan" Lg="ContentSpan" Md="24" Sm="24" Xs="24">
 
         <AntDesign.Title Level="1">
             <div class="flex-between">
@@ -55,6 +55,23 @@
 
         @if (!IsPageInitializing)
         {
+            <CollapsibleCard Title="Users" AnchorLink="user-list" BodyStyle="padding: 0">
+                <Table DataSource="Users"
+                       Responsive
+                       HidePagination>
+                    <Column Title="Name" TData="User">
+                        <Tooltip Title="context.Email">
+                            <span>@context.DisplayName</span>
+                        </Tooltip>
+                    </Column>
+                    <ActionColumn Title="Include">
+                        <Switch Checked="context.Included" CheckedChanged="async include => await UserIncludeChangedAsync(context, include)" />
+                    </ActionColumn>
+                </Table>
+            </CollapsibleCard>
+            
+            <Divider />
+            
             <CollapsibleCard Title="Current Sprint Work Items" AnchorLink="current-sprint">
                 <WorkItemListComponent WorkItems="@_dailyScrum.WorkItems" IsOnBoard=true OnYesterday=AddYesterday OnToday=AddToday/>
             </CollapsibleCard>
@@ -81,11 +98,12 @@
             </CollapsibleCard>
         }
     </AntDesign.Col>
-    <AntDesign.Col Xxl="@AnchorSpan" Xl="@AnchorSpan" Lg="AnchorSpan" Md="AnchorSpan" Sm="0" Xs="0">
+    <AntDesign.Col Xxl="@AnchorSpan" Xl="@AnchorSpan" Lg="AnchorSpan" Md="0" Sm="0" Xs="0">
         <Affix>
             <Card Class="ant-card-affix">
                 <Anchor>
                     <AnchorLink Href="/#connection-info" Title="Azure DevOps Connection Info"/>
+                    <AnchorLink Href="/user-list" Title="Users"/>
                     <AnchorLink Href="/#current-sprint" Title="Current Sprint Work Items"/>
                     <AnchorLink Href="/#yesterday-today" Title="Yesterday/Today"/>
                     <AnchorLink Href="/#output" Title="Output"/>
