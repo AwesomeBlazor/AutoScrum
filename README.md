@@ -14,7 +14,7 @@ Armed with this valuable knowledge, AutoScrum can generate your Daily Scrum emai
 
 Thanks
 
-*William Liebenberg & Jernej Kavka (JK)*
+*William Liebenberg, Jernej Kavka (JK), Luke Parker*
 
-*SSW Solution Architects*
+The AwesomeBlazor team!
  
