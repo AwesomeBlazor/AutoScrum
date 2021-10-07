@@ -53,7 +53,7 @@ namespace AutoScrum.Pages
             }
             catch
             {
-                await MessageService.Error("Critical error while loading config");
+                MessageService.Error("Critical error while loading config");
                 throw;
             }
 
@@ -69,11 +69,11 @@ namespace AutoScrum.Pages
             if (_connectionForm.Validate())
             {
                 await GetDataFromAzureDevOpsAsync();
-                await MessageService.Success("Loaded data from Azure DevOps!");
+                MessageService.Success("Loaded data from Azure DevOps!");
             }
             else
             {
-                await MessageService.Warning("Some validations failed...");
+                MessageService.Warning("Some validations failed...");
             }
 
             _connectionFormLoading = false;
@@ -86,7 +86,7 @@ namespace AutoScrum.Pages
             if (_connectionForm.Validate())
             {
                 await ConfigService.SetConfig(ConnectionInfo);
-                await MessageService.Success("Config saved successfully!");
+                MessageService.Success("Config saved successfully!");
             }
             
             _connectionFormLoading = false;
@@ -97,7 +97,7 @@ namespace AutoScrum.Pages
             _connectionFormLoading = true;
 
             await ConfigService.Clear();
-            await MessageService.Success("Config deleted successfully!");
+            MessageService.Success("Config deleted successfully!");
 
             _connectionFormLoading = false;
         }
@@ -156,7 +156,7 @@ namespace AutoScrum.Pages
             }
             catch
             {
-                await MessageService.Error("Critical error while loading data from Azure DevOps");
+                MessageService.Error("Critical error while loading data from Azure DevOps");
                 throw;
             }
             
