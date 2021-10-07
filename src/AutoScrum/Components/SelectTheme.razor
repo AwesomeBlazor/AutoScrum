@@ -3,7 +3,14 @@
 
 <div style="display: flex; justify-content: center; align-items: center; flex-direction: row">
     <Title Level="4" Style="padding: 0; margin: 0 0.5rem 0 0">Theme: </Title>
-    <EnumSelect TEnum="AntTheme" Value="AntTheme.Default" ValueChanged="ThemeChangedAsync" Style="width: 150px"/>
+    @if (_themeSettings is null)
+    {
+        <Spin />
+    }
+    else
+    {
+        <EnumSelect TEnum="AntTheme" Value="_themeSettings.Theme" ValueChanged="ThemeChangedAsync" Style="width: 150px"/>
+    }
 </div>
 @code 
 {
