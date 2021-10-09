@@ -1,16 +1,17 @@
-﻿using System;
+﻿using AntDesign;
+using AutoScrum.AzureDevOps;
+using AutoScrum.Core.Config;
+using AutoScrum.Core.Models;
+using AutoScrum.Core.Services;
+using AutoScrum.Models;
+using AutoScrum.Services;
+using Microsoft.AspNetCore.Components;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
-using AntDesign;
-using AutoScrum.AzureDevOps.Config;
-using AutoScrum.AzureDevOps.Models;
-using AutoScrum.AzureDevOps;
-using AutoScrum.Services;
-using Microsoft.AspNetCore.Components;
-using AutoScrum.Models;
-using ConfigService = AutoScrum.Services.ConfigService;
+using OldConfigService = AutoScrum.Services.OldConfigService;
 
 namespace AutoScrum.Pages
 {
@@ -21,7 +22,7 @@ namespace AutoScrum.Pages
         private const int ContentSpan = 21;
         private const int AnchorSpan = 3;
 
-        private Form<AzureDevOpsConnectionInfo> _connectionForm;
+        private Form<ProjectConfigAzureDevOps> _connectionForm;
         private bool _connectionFormLoading;
 
         private bool IsPageInitializing { get; set; } = true;
@@ -29,12 +30,14 @@ namespace AutoScrum.Pages
         private List<WorkItem>? _cachedWorkItems;
 
         [Inject] public HttpClient HttpClient { get; set; }
-        [Inject] public ConfigService ConfigService { get; set; }
+        // TODO: Remove when all is updated.
+        [Inject] public OldConfigService OldConfigService { get; set; }
+        [Inject] public IConfigService ConfigService { get; set; }
         [Inject] public MessageService MessageService { get; set; }
 
         private MarkupString Output { get; set; } = (MarkupString)"";
 
-        private AzureDevOpsConnectionInfo ConnectionInfo { get; set; } = new();
+        private ProjectConfigAzureDevOps ConnectionInfo { get; set; } = new();
         private List<User> Users { get; set; } = new();
         private List<User> IncludedUsers { get; set; } = new();
         private User SelectedUser { get; set; }
@@ -43,12 +46,17 @@ namespace AutoScrum.Pages
         {
             try
             {
-                var config = await ConfigService.GetConfig();
+                AppConfig config = await ConfigService.GetAppConfig();
                 if (config != null)
                 {
-                    ConnectionInfo = config;
+                    var project = await ConfigService.GetCurrentProject();
+                    if (project is ProjectConfigAzureDevOps azureDevOpsProject)
+                    {
+                        ConnectionInfo = azureDevOpsProject;
 
-                    await GetDataFromAzureDevOpsAsync();
+                        // TODO: This should be postponed so that theme and UI can be updated.
+                        await GetDataFromAzureDevOpsAsync();
+                    }
                 }
             }
             catch
@@ -85,7 +93,7 @@ namespace AutoScrum.Pages
 
             if (_connectionForm.Validate())
             {
-                await ConfigService.SetConfig(ConnectionInfo);
+                await OldConfigService.SetConfig(ConnectionInfo);
                 MessageService.Success("Config saved successfully!");
             }
             
@@ -96,21 +104,14 @@ namespace AutoScrum.Pages
         {
             _connectionFormLoading = true;
 
-            await ConfigService.Clear();
+            await OldConfigService.Clear();
             MessageService.Success("Config deleted successfully!");
 
             _connectionFormLoading = false;
         }
         
         private AzureDevOpsService GetAzureDevOpsService() => new(
-            new AzureDevOpsConfig
-            {
-                UserEmail = ConnectionInfo.UserEmail,
-                Organization = ConnectionInfo.AzureDevOpsOrganization,
-                OrganizationUrl = new Uri($"https://{ConnectionInfo.AzureDevOpsOrganization}.visualstudio.com"),
-                Project = ConnectionInfo.ProjectName,
-                Token = ConnectionInfo.PersonalAccessToken
-            }, HttpClient);
+            ConnectionInfo, HttpClient);
 
         private async Task<Sprint?> GetCurrentSprint(AzureDevOpsService azureDevOpsService = null)
         {

@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace AutoScrum.AzureDevOps.Models
+namespace AutoScrum.Core.Models
 {
     public class Sprint
     {

@@ -16,6 +16,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\AutoScrum.AzureDevOps\AutoScrum.AzureDevOps.csproj" />
+    <ProjectReference Include="..\AutoScrum.Infrastructure.Blazor\AutoScrum.Infrastructure.Blazor.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using AutoScrum.AzureDevOps.Models;
+using AutoScrum.Core.Models;
 using AutoScrum.Models;
 
 namespace AutoScrum.Services

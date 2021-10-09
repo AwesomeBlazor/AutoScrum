@@ -6,6 +6,7 @@ using System;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Components.Web;
+using AutoScrum.Infrastructure.Blazor;
 
 namespace AutoScrum
 {
@@ -23,9 +24,10 @@ namespace AutoScrum
 	        {
 		        BaseAddress = new Uri(builder.HostEnvironment.BaseAddress)
 	        });
-	        services.AddTransient<ConfigService>();
+	        services.AddTransient<OldConfigService>();
 
-	        services.AddBlazoredLocalStorage();
+			services.AddBlazorInfrastructure();
+
 	        services.AddAntDesign();
 
 	        var host = builder.Build();

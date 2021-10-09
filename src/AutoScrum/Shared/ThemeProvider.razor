@@ -1,6 +1,6 @@
 ﻿@using AutoScrum.Models
 
-@inject Services.ConfigService _configService
+@inject AutoScrum.Core.Services.IConfigService _configService
 
 @if (_themeSettings is not null && _themeSettings.Theme is not AntTheme.Default)
 {
@@ -24,7 +24,7 @@
 
     private async Task ReloadAsync(bool forceStateChange = false)
     {
-        _themeSettings = await _configService.GetTheme() ?? new ThemeSettings();
+        _themeSettings = await _configService.GetTheme();
 
         if (forceStateChange)
         {

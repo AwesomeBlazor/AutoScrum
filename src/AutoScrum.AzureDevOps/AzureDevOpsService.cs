@@ -13,7 +13,8 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
 using AzureDevOpsWorkItem = Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItem;
-using WorkItemModel = AutoScrum.AzureDevOps.Models.WorkItem;
+using WorkItemModel = AutoScrum.Core.Models.WorkItem;
+using AutoScrum.Core.Config;
 
 namespace AutoScrum.AzureDevOps
 {
@@ -25,6 +26,9 @@ namespace AutoScrum.AzureDevOps
     {
         private readonly AzureDevOpsConfig _config;
         private readonly HttpClient _httpClient;
+
+        public AzureDevOpsService(ProjectConfigAzureDevOps config, HttpClient httpClient)
+            : this(AzureDevOpsConfig.FromConfig(config), httpClient) { }
 
         public AzureDevOpsService(AzureDevOpsConfig config, HttpClient httpClient)
         {
