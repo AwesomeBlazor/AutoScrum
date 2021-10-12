@@ -73,10 +73,6 @@ namespace AutoScrum.Pages
                 await GetDataFromAzureDevOpsAsync();
                 MessageService.Success("Loaded data from Azure DevOps!");
             }
-            else
-            {
-                MessageService.Warning("Some validations failed...");
-            }
 
             _connectionFormLoading = false;
         }
