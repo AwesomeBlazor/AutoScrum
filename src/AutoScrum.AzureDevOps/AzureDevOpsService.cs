@@ -111,7 +111,7 @@ namespace AutoScrum.AzureDevOps
             var idsAsString = string.Join(",", ids.Select(x => x.ToString()));
 
             // Minimum required.
-            var fields = "System.State,System.WorkItemType,System.Parent,System.IterationPath,System.CreatedDate,System.ChangedDate,System.Title,Microsoft.VSTS.Common.StateChangeDate";
+            string fields = "System.State,System.WorkItemType,System.Parent,System.IterationPath,System.CreatedDate,System.ChangedDate,System.Title,Microsoft.VSTS.Common.StateChangeDate,Microsoft.VSTS.CMMI.Blocked";
             if (includeAssignTo)
             {
                 fields += ",System.AssignedTo";
@@ -142,6 +142,7 @@ namespace AutoScrum.AzureDevOps
                     ParentId = x.ParseAsNullableInt("System.Parent"),
                     AssignedToDisplayName = x.ParsePersonDisplayName("System.AssignedTo"),
                     AssignedToEmail = x.ParsePersonUniqueName("System.AssignedTo"),
+                    Blocked = x.ParseAsString("Microsoft.VSTS.CMMI.Blocked"),
                     Url = x.Url
                 })
                 .ToList();

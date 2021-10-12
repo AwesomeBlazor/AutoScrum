@@ -37,6 +37,8 @@ namespace AutoScrum.Pages
         private AzureDevOpsConnectionInfo? ConnectionInfo { get; set; }
         private AzureDevOpsConnectionInfoRequest ConnectionInfoRequest { get; set; } = new();
         private List<User> Users { get; set; } = new();
+        private List<User> IncludedUsers { get; set; } = new();
+
         protected override async Task OnInitializedAsync()
         {
             try
@@ -137,8 +139,9 @@ namespace AutoScrum.Pages
                 _cachedWorkItems = await GetAzureDevOpsService()
                     .GetWorkItemsForSprint(sprint, ConnectionInfo!.TeamFilterBy);
 
+                Users = GetUniqueUsers(_cachedWorkItems);
                 ReloadUsers();
-                    
+
                 ReloadWorkItems();
 
                 StateHasChanged();
@@ -157,26 +160,7 @@ namespace AutoScrum.Pages
 
         private void ReloadUsers()
         {
-            var existingUsers = Users;
-            
-            Users = GetUniqueUsers(_cachedWorkItems!);
-                    
-            if (!Users.Any())
-            {
-                Users.Add(new User("Me", "me@me.com"));
-            }
-
-            foreach (var excludedUser in existingUsers.Where(x => !x.Included))
-            {
-                var userMatch = Users.FirstOrDefault(x => x.Email == excludedUser.Email);
-
-                if (userMatch is null)
-                {
-                    continue;
-                }
-                
-                userMatch.Included = excludedUser.Included;
-            }
+            IncludedUsers = Users.Where(x => x.Included).ToList();
         }
         
         private void ReloadWorkItems()
@@ -194,7 +178,7 @@ namespace AutoScrum.Pages
         private void UpdateOutput()
         {
             var markdown = _dailyScrum.GenerateReport(Users.Where(x => x.Included).ToList());
-            var html = Markdig.Markdown.ToHtml(markdown ?? string.Empty);
+            var html = Markdig.Markdown.ToHtml(markdown);
             Output = (MarkupString)html;
 
             StateHasChanged();
@@ -226,7 +210,7 @@ namespace AutoScrum.Pages
             UpdateOutput();
         }
 
-        private List<User> GetUniqueUsers(List<WorkItem> workItems)
+        private static List<User> GetUniqueUsers(IReadOnlyCollection<WorkItem> workItems)
         {
             Dictionary<string, User> users = new();
 
@@ -265,5 +249,6 @@ namespace AutoScrum.Pages
         }
         
         private string GetGenerateForLabel() => "Generate for " + ConnectionInfoRequest.TeamFilterBy;
+        private void OnBlockingUpdated() => UpdateOutput();
     }
 }

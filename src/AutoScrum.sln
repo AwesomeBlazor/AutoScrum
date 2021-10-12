@@ -10,8 +10,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Project Files", "Project Fi
 		..\.gitignore = ..\.gitignore
 		..\.github\workflows\azure-static-web-apps-gentle-meadow-0d236b010.yml = ..\.github\workflows\azure-static-web-apps-gentle-meadow-0d236b010.yml
 		..\create-az-resources.ps1 = ..\create-az-resources.ps1
-		..\README.md = ..\README.md
 		global.json = global.json
+		..\README.md = ..\README.md
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AutoScrum.AzureDevOps", "AutoScrum.AzureDevOps\AutoScrum.AzureDevOps.csproj", "{DB549677-BFBD-4C81-A1A2-7E9473FC03A3}"
@@ -20,7 +20,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{D1687D74
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AutoScrum.Tests", "AutoScrum.Tests\AutoScrum.Tests.csproj", "{06C04660-3255-4291-8870-D7F1FFE03B48}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AutoScrum.Core", "AutoScrum.Core\AutoScrum.Core.csproj", "{D0210D04-41C1-49A4-B3F6-830E8E5B3CF0}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AutoScrum.Core", "AutoScrum.Core\AutoScrum.Core.csproj", "{D0210D04-41C1-49A4-B3F6-830E8E5B3CF0}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
