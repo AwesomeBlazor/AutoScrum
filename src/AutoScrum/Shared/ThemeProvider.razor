@@ -2,10 +2,10 @@
 
 @inject Services.ConfigService _configService
 
-@if (_themeSettings is not null && _themeSettings.Theme is not AntTheme.Default)
+@if (ThemeSettings is not null && ThemeSettings.Theme is not AntTheme.Default)
 {
     <HeadContent>
-        <link href=@($"_content/AntDesign/css/ant-design-blazor.{_themeSettings.Theme.ToString().ToLower()}.css") rel="stylesheet" />
+        <link href=@($"_content/AntDesign/css/ant-design-blazor.{ThemeSettings.Theme.ToString().ToLower()}.css") rel="stylesheet" />
     </HeadContent>
 }
 
@@ -16,15 +16,22 @@
 @code
 {
     [Parameter]
-    public RenderFragment<ThemeProvider> ChildContent { get; set; }
-    
-    private ThemeSettings _themeSettings;
+    public RenderFragment<ThemeProvider> ChildContent { get; set; } = null!;
+
+    public ThemeSettings? ThemeSettings { get; private set; }
 
     protected override async Task OnInitializedAsync() => await ReloadAsync();
 
     private async Task ReloadAsync(bool forceStateChange = false)
     {
-        _themeSettings = await _configService.GetTheme() ?? new ThemeSettings();
+        ThemeSettings = await _configService.GetTheme();
+
+        if (ThemeSettings is null)
+        {
+            ThemeSettings = new ThemeSettings();
+
+            await _configService.SetTheme(ThemeSettings);
+        }
 
         if (forceStateChange)
         {

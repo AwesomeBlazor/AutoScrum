@@ -14,7 +14,7 @@
 
         <CollapsibleCard Title="Azure DevOps Connection Info" AnchorLink="connection-info" DefaultVisible>
             @* TODO: Refactor to new component: 'ConnectionInfoForm.razor' *@
-            <Form Model="ConnectionInfo"
+            <Form Model="ConnectionInfoRequest"
                   LabelColSpan="4"
                   WrapperColSpan="20"
                   @ref="_connectionForm"
@@ -65,7 +65,7 @@
                         </Tooltip>
                     </Column>
                     <ActionColumn Title="Include">
-                        <Switch Checked="context.Included" CheckedChanged="async include => await UserIncludeChangedAsync(context, include)" />
+                        <Switch Checked="context.Included" CheckedChanged="include => UserIncludeChanged(context, include)" />
                     </ActionColumn>
                 </Table>
             </CollapsibleCard>

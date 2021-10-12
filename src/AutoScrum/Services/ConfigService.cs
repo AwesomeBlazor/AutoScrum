@@ -18,10 +18,7 @@ namespace AutoScrum.Services
             _localStorage = localStorage;
         }
 
-        public async Task<AzureDevOpsConnectionInfo> GetConfig()
-        {
-            return await _localStorage.GetItemAsync<AzureDevOpsConnectionInfo>(ConfigKey);
-        }
+        public async Task<AzureDevOpsConnectionInfo?> GetConfig() => await _localStorage.GetItemAsync<AzureDevOpsConnectionInfo>(ConfigKey);
 
         public async Task SetConfig(AzureDevOpsConnectionInfo config)
         {
@@ -35,7 +32,7 @@ namespace AutoScrum.Services
             }
         }
         
-        public async Task<ThemeSettings> GetTheme()
+        public async Task<ThemeSettings?> GetTheme()
         {
             return await _localStorage.GetItemAsync<ThemeSettings>(ThemeKey);
         }

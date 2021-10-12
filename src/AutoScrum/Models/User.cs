@@ -2,7 +2,6 @@
 
 public class User
 {
-    public User() { }
     public User(string displayName, string email)
     {
         DisplayName = displayName;

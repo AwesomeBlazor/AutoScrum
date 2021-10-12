@@ -10,7 +10,7 @@ namespace AutoScrum.Services
     {
         public static string GenerateMarkdownReport(DateOnly todayDay, DateOnly previousDay, List<WorkItem> today, List<WorkItem> yesterday, List<User> users)
         {
-            var isTeam = users?.Count > 1;
+            var isTeam = users.Count > 1;
             var dailyScrumReport = string.Empty;
             if (isTeam)
             {

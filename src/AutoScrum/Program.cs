@@ -24,6 +24,7 @@ namespace AutoScrum
 		        BaseAddress = new Uri(builder.HostEnvironment.BaseAddress)
 	        });
 	        services.AddTransient<ConfigService>();
+	        services.AddTransient<AutoMessageService>();
 
 	        services.AddBlazoredLocalStorage();
 	        services.AddAntDesign();
