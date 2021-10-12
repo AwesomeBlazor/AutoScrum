@@ -13,5 +13,5 @@ public class User
 
     public bool Included { get; set; } = true;
 
-    public string Blocking { get; set; }
+    public string? Blocking { get; set; }
 }

@@ -93,7 +93,7 @@ namespace AutoScrum.Services
             return hasWork ? report : null;
         }
 
-        private static StringBuilder? GenerateBlockersMarkdown(List<WorkItem> workItems, string blocker)
+        private static StringBuilder? GenerateBlockersMarkdown(List<WorkItem> workItems, string? blocker)
         {
             var blockedItems = workItems
                 .Where(x => x.IsBlocked)
