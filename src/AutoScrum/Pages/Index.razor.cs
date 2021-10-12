@@ -70,6 +70,7 @@ namespace AutoScrum.Pages
             
             if (_connectionForm.Validate())
             {
+                ReloadConnectionInfoFromForm();
                 await GetDataFromAzureDevOpsAsync();
                 MessageService.Success("Loaded data from Azure DevOps!");
             }
