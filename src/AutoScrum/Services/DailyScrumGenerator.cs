@@ -103,13 +103,16 @@ namespace AutoScrum.Services
                 .SelectMany(x => x.Children)
                 .Where(x => x.IsBlocked));
 
-            if (!blockedItems.Any() && string.IsNullOrWhiteSpace(blocker))
+            var anyBlockedItems = blockedItems.Any();
+            var blockerIsNullOrWhiteSpace = string.IsNullOrWhiteSpace(blocker);
+
+            if (!anyBlockedItems && blockerIsNullOrWhiteSpace)
             {
                 return null;
             }
 
             var report = new StringBuilder($"**Blocking**{Environment.NewLine}");
-            if (blockedItems.Any())
+            if (anyBlockedItems)
             {
                 foreach (var wi in blockedItems)
                 {
@@ -117,7 +120,7 @@ namespace AutoScrum.Services
                 }
             }
 
-            if (!string.IsNullOrWhiteSpace(blocker))
+            if (!blockerIsNullOrWhiteSpace)
             {
                 report.Append($"- {blocker}{Environment.NewLine}");
             }
