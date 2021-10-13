@@ -9,15 +9,15 @@
             <div>
                 @if (HasYesterdayButton)
                 {
-                    <Button Type="@ButtonType.Link" OnClick="() => OnYesterday?.Invoke(WorkItem)">Yesterday</Button>
+                    <Button Type="@ButtonType.Link" OnClick="async () => { if (OnYesterday.HasDelegate) {await OnYesterday.InvokeAsync(WorkItem);} }">Yesterday</Button>
                 }
                 @if (HasTodayButton)
                 {
-                    <Button Type="@ButtonType.Link" OnClick="() => OnToday?.Invoke(WorkItem)">Today</Button>
+                    <Button Type="@ButtonType.Link" OnClick="async () => { if (OnToday.HasDelegate) {await OnToday.InvokeAsync(WorkItem);} }">Today</Button>
                 }
                 @if (HasRemoveButton)
                 {
-                    <Button Type="@ButtonType.Link" Danger OnClick="() => OnRemove?.Invoke(WorkItem)">Remove</Button>
+                    <Button Type="@ButtonType.Link" Danger OnClick="async () => { if (OnRemove.HasDelegate) {await OnRemove.InvokeAsync(WorkItem);} }">Remove</Button>
                 }
             </div>
         </div>
@@ -42,9 +42,9 @@
 
     [Parameter] public WorkItem WorkItem { get; set; } = null!;
     [Parameter] public bool IsOnBoard { get; set; }
-    [Parameter] public Action<WorkItem>? OnToday { get; set; }
-    [Parameter] public Action<WorkItem>? OnYesterday { get; set; }
-    [Parameter] public Action<WorkItem>? OnRemove { get; set; }
+    [Parameter] public EventCallback<WorkItem> OnToday { get; set; }
+    [Parameter] public EventCallback<WorkItem> OnYesterday { get; set; }
+    [Parameter] public EventCallback<WorkItem> OnRemove { get; set; }
     [Parameter] public bool ShowChildren { get; set; }
     [Parameter] public bool Inline { get; set; }
     [Parameter] public bool IsChild { get; set; }

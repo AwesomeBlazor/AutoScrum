@@ -22,9 +22,9 @@ else
 @code {
     [Parameter] public List<WorkItem>? WorkItems { get; set; }
     [Parameter] public bool IsOnBoard { get; set; }
-    [Parameter] public Action<WorkItem>? OnToday { get; set; }
-    [Parameter] public Action<WorkItem>? OnYesterday { get; set; }
-    [Parameter] public Action<WorkItem>? OnRemove { get; set; }
+    [Parameter] public EventCallback<WorkItem> OnToday { get; set; }
+    [Parameter] public EventCallback<WorkItem> OnYesterday { get; set; }
+    [Parameter] public EventCallback<WorkItem> OnRemove { get; set; }
     [Parameter] public bool ShowChildren { get; set; } = true;
     [Parameter] public bool Inline { get; set; }
     [Parameter] public bool IsChild { get; set; }

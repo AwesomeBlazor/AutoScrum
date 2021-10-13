@@ -1,0 +1,31 @@
+﻿<CollapsibleCard Title="Blocking" AnchorLink="blocking" BodyStyle="padding: 0">
+    <Table DataSource="IncludedUsers"
+           Responsive
+           HidePagination>
+        <Column Title="Name" TData="User">
+            <Tooltip Title="context.Email">
+                <span>@context.DisplayName</span>
+            </Tooltip>
+        </Column>
+        <ActionColumn Title="Include">
+            <TextArea Placeholder="Autosize height based on content lines" AutoSize="true" @bind-Value="context.Blocking" OnChange="BlockingUpdated" />
+        </ActionColumn>
+    </Table>
+</CollapsibleCard>
+
+@code
+{
+    [Parameter]
+    public List<User>? IncludedUsers { get; set; }
+    
+    [Parameter]
+    public EventCallback OnBlockingUpdated { get; set; }
+
+    private async Task BlockingUpdated()
+    {
+        if (OnBlockingUpdated.HasDelegate)
+        {
+            await OnBlockingUpdated.InvokeAsync();
+        }
+    }
+}

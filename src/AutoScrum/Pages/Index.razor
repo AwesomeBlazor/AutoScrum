@@ -1,132 +1,44 @@
 ﻿@page "/"
 @using AutoScrum.Components
-@using AutoScrum.Core.Models
 
 <AntDesign.Row>
     <AntDesign.Col Xxl="@ContentSpan" Xl="@ContentSpan" Lg="ContentSpan" Md="24" Sm="24" Xs="24">
 
-        <AntDesign.Title Level="1">
-            <div class="flex-between">
-                Ready, Set... ENGAGE!
-                <SelectTheme/>
-            </div>
-        </AntDesign.Title>
-
-        <CollapsibleCard Title="Azure DevOps Connection Info" AnchorLink="connection-info" DefaultVisible>
-            @* TODO: Refactor to new component: 'ConnectionInfoForm.razor' *@
-            <Form Model="ConnectionInfoRequest"
-                  LabelColSpan="4"
-                  WrapperColSpan="20"
-                  @ref="_connectionForm"
-                  Loading="_connectionFormLoading">
-                <FormItem>
-                    <AntDesign.Input @bind-Value="context.UserEmail" Placeholder="Your email..."/>
-                </FormItem>
-                <FormItem>
-                    <AntDesign.InputPassword @bind-Value="context.PersonalAccessToken" Placeholder="Your Azure DevOps Personal Access Token (PAT)"/>
-                </FormItem>
-                <FormItem>
-                    <AntDesign.Input @bind-Value="context.AzureDevOpsOrganization" Placeholder="Azure DevOps Organization Name or URL"/>
-                </FormItem>
-                <FormItem>
-                    <AntDesign.Input @bind-Value="context.ProjectName" Placeholder="Azure DevOps Project"/>
-                </FormItem>
-                <FormItem Label="@GetGenerateForLabel()">
-                    <RadioGroup @bind-Value="context.TeamFilterBy">
-                        <Radio RadioButton Value="@TeamFilterBy.Me">Just me</Radio>
-                        <Radio RadioButton Value="@TeamFilterBy.Team">Team</Radio>
-                    </RadioGroup>
-                </FormItem>
-                <FormItem WrapperColOffset="4" WrapperColSpan="20">
-                    <Button Type="@ButtonType.Primary" OnClick="SubmitAsync">
-                        Submit
-                    </Button>
-                    <Button Type="@ButtonType.Default" OnClick="SaveConfigAsync">
-                        Save
-                    </Button>
-                    <Button Danger Type="@ButtonType.Default" OnClick="DeleteConfigAsync">
-                        Delete
-                    </Button>
-                </FormItem>
-            </Form>
-        </CollapsibleCard>
-
+        <AutoScrumTitle />
+        
+        <ConnectionInfoCard ConnectionInfo="ConnectionInfo" OnSubmit="OnConnectionSubmit"/>
+        
         <Divider/>
 
         @if (!IsPageInitializing)
         {
-            <CollapsibleCard Title="Users" AnchorLink="user-list" BodyStyle="padding: 0">
-                <Table DataSource="Users"
-                       Responsive
-                       HidePagination>
-                    <Column Title="Name" TData="User">
-                        <Tooltip Title="context.Email">
-                            <span>@context.DisplayName</span>
-                        </Tooltip>
-                    </Column>
-                    <ActionColumn Title="Include">
-                        <Switch Checked="context.Included" CheckedChanged="include => UserIncludeChanged(context, include)" />
-                    </ActionColumn>
-                </Table>
-            </CollapsibleCard>
+            <UsersCard OnUserIncludeChanged="UserIncludeChanged"/>
             
             <Divider />
 
-            <CollapsibleCard Title="Blocking" AnchorLink="blocking" BodyStyle="padding: 0">
-                <Table DataSource="IncludedUsers"
-                       Responsive
-                       HidePagination>
-                    <Column Title="Name" TData="User">
-                        <Tooltip Title="context.Email">
-                            <span>@context.DisplayName</span>
-                        </Tooltip>
-                    </Column>
-                    <ActionColumn Title="Include">
-                        <TextArea Placeholder="Autosize height based on content lines" AutoSize="true" @bind-Value="context.Blocking" OnChange="OnBlockingUpdated" />
-                    </ActionColumn>
-                </Table>
-            </CollapsibleCard>
+            <BlockingCard IncludedUsers="IncludedUsers" OnBlockingUpdated="UpdateOutput"/>
             
             <Divider />
             
-            <CollapsibleCard Title="Current Sprint Work Items" AnchorLink="current-sprint">
-                <WorkItemListComponent WorkItems="@_dailyScrum.WorkItems" IsOnBoard=true OnYesterday=AddYesterday OnToday=AddToday/>
-            </CollapsibleCard>
+            <CurrentSprintCard DailyScrum="_dailyScrum" OnUpdate="UpdateOutput"/>
 
             <Divider/>
 
             <Row>
                 <AntDesign.Col Span="12" Xl="12" Md="24" Sm="24">
-                    <CollapsibleCard Title="Yesterday" AnchorLink="yesterday-today">
-                        <WorkItemListComponent WorkItems="@_dailyScrum.Yesterday" IsOnBoard=false OnRemove="wi => RemoveWorkItem(wi, false)"></WorkItemListComponent>
-                    </CollapsibleCard>
+                    <YesterdayCard DailyScrum="_dailyScrum" OnRemove="UpdateOutput"/>
                 </AntDesign.Col>
                 <AntDesign.Col Span="12" Xl="12" Md="24" Sm="24">
-                    <CollapsibleCard Title="Today">
-                        <WorkItemListComponent WorkItems="@_dailyScrum.Today" IsOnBoard=false OnRemove="wi => RemoveWorkItem(wi, true)"></WorkItemListComponent>
-                    </CollapsibleCard>
+                    <TodayCard DailyScrum="_dailyScrum" OnRemove="UpdateOutput"/>
                 </AntDesign.Col>
             </Row>
 
             <Divider/>
 
-            <CollapsibleCard Title="Output" DefaultVisible AnchorLink="output">
-                @Output
-            </CollapsibleCard>
+            <OutputCard Output="@Output"/>
         }
     </AntDesign.Col>
     <AntDesign.Col Xxl="@AnchorSpan" Xl="@AnchorSpan" Lg="AnchorSpan" Md="0" Sm="0" Xs="0">
-        <Affix>
-            <Card Class="ant-card-affix">
-                <Anchor>
-                    <AnchorLink Href="/#connection-info" Title="Azure DevOps Connection Info"/>
-                    <AnchorLink Href="/#user-list" Title="Users"/>
-                    <AnchorLink Href="/#blocking" Title="Blocking"/>
-                    <AnchorLink Href="/#current-sprint" Title="Current Sprint Work Items"/>
-                    <AnchorLink Href="/#yesterday-today" Title="Yesterday/Today"/>
-                    <AnchorLink Href="/#output" Title="Output"/>
-                </Anchor>
-            </Card>
-        </Affix>
+        <AutoScrumAffix />
     </AntDesign.Col>
 </AntDesign.Row>

@@ -1,0 +1,42 @@
+﻿@using AutoScrum.AzureDevOps.Models
+@using AutoScrum.Services
+<CollapsibleCard Title="Current Sprint Work Items" AnchorLink="current-sprint">
+    <WorkItemListComponent WorkItems="@DailyScrum!.WorkItems" IsOnBoard=true OnYesterday="async wi => await OnYesterdayAsync(wi)" OnToday="async wi => await OnTodayAsync(wi)"/>
+</CollapsibleCard>
+
+@code
+{
+    [Parameter]
+    public DailyScrumService? DailyScrum { get; set; }
+
+    [Parameter]
+    public EventCallback OnUpdate { get; set; }
+
+    protected override void OnParametersSet()
+    {
+        if (DailyScrum is null)
+        {
+            throw new ArgumentNullException(nameof(DailyScrum));
+        }
+    }
+
+    private async Task OnYesterdayAsync(WorkItem workItem)
+    {
+        DailyScrum!.AddYesterday(workItem);
+
+        if (OnUpdate.HasDelegate)
+        {
+            await OnUpdate.InvokeAsync();
+        }
+    }
+
+    private async Task OnTodayAsync(WorkItem workItem)
+    {
+        DailyScrum!.AddToday(workItem);
+        
+        if (OnUpdate.HasDelegate)
+        {
+            await OnUpdate.InvokeAsync();
+        }
+    }
+}

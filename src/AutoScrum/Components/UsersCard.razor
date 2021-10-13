@@ -1,0 +1,34 @@
+﻿<CollapsibleCard Title="Users" AnchorLink="user-list" BodyStyle="padding: 0">
+    <Table DataSource="Users"
+           Responsive
+           HidePagination>
+        <Column Title="Name" TData="User">
+            <Tooltip Title="context.Email">
+                <span>@context.DisplayName</span>
+            </Tooltip>
+        </Column>
+        <ActionColumn Title="Include">
+            <Switch Checked="context.Included" CheckedChanged="async include => await UserIncludeChangedAsync(context, include)" />
+        </ActionColumn>
+    </Table>
+</CollapsibleCard>
+
+@code
+{
+    [Parameter]
+    public List<User> Users { get; set; } = new();
+    
+    [Parameter]
+    public EventCallback<User> OnUserIncludeChanged { get; set; }
+    
+    private async Task UserIncludeChangedAsync(User user, bool isIncluded)
+    {
+        user.Included = isIncluded;
+
+        if (OnUserIncludeChanged.HasDelegate)
+        {
+            await OnUserIncludeChanged.InvokeAsync();
+        }
+    }
+
+}

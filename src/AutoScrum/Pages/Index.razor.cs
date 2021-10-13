@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
-using AntDesign;
 using AutoScrum.AzureDevOps.Config;
 using AutoScrum.AzureDevOps.Models;
 using AutoScrum.AzureDevOps;
@@ -20,10 +19,6 @@ namespace AutoScrum.Pages
 
         private const int ContentSpan = 21;
         private const int AnchorSpan = 3;
-
-        private Form<AzureDevOpsConnectionInfoRequest> _connectionForm = null!;
-        private bool _connectionFormLoading;
-
         private bool IsPageInitializing { get; set; } = true;
 
         private List<WorkItem>? _cachedWorkItems;
@@ -35,7 +30,6 @@ namespace AutoScrum.Pages
         private MarkupString Output { get; set; } = (MarkupString)"";
 
         private AzureDevOpsConnectionInfo? ConnectionInfo { get; set; }
-        private AzureDevOpsConnectionInfoRequest ConnectionInfoRequest { get; set; } = new();
         private List<User> Users { get; set; } = new();
         private List<User> IncludedUsers { get; set; } = new();
 
@@ -64,48 +58,8 @@ namespace AutoScrum.Pages
             IsPageInitializing = false;
         }
 
-        private async Task SubmitAsync()
-        {
-            _connectionFormLoading = true;
-            
-            if (_connectionForm.Validate())
-            {
-                ReloadConnectionInfoFromForm();
-                await GetDataFromAzureDevOpsAsync();
-                MessageService.Success("Loaded data from Azure DevOps!");
-            }
+        private async Task OnConnectionSubmit(AzureDevOpsConnectionInfoRequest connectionInfoRequest) => await GetDataFromAzureDevOpsAsync();
 
-            _connectionFormLoading = false;
-        }
-
-        private async Task SaveConfigAsync()
-        {
-            _connectionFormLoading = true;
-
-            if (_connectionForm.Validate())
-            {
-                ReloadConnectionInfoFromForm();
-                await ConfigService.SetConfig(ConnectionInfo!);
-                MessageService.Success("Config saved successfully!");
-            }
-            
-            _connectionFormLoading = false;
-        }
-
-        private async Task DeleteConfigAsync()
-        {
-            _connectionFormLoading = true;
-
-            await ConfigService.Clear();
-            
-            ConnectionInfo = null;
-            ConnectionInfoRequest = new AzureDevOpsConnectionInfoRequest();
-            
-            MessageService.Success("Config deleted successfully!");
-
-            _connectionFormLoading = false;
-        }
-        
         private AzureDevOpsService GetAzureDevOpsService()
         {
             EnsureConnectionInfoValid();
@@ -150,11 +104,6 @@ namespace AutoScrum.Pages
             }
         }
 
-        private void ReloadConnectionInfoFromForm()
-        {
-            ConnectionInfo = new AzureDevOpsConnectionInfo(ConnectionInfoRequest.UserEmail!, ConnectionInfoRequest.PersonalAccessToken!, ConnectionInfoRequest.AzureDevOpsOrganization!, ConnectionInfoRequest.ProjectName!, ConnectionInfoRequest.TeamFilterBy);
-        }
-
         private void ReloadUsers()
         {
             IncludedUsers = Users.Where(x => x.Included).ToList();
@@ -181,32 +130,6 @@ namespace AutoScrum.Pages
             StateHasChanged();
         }
 
-        private void AddYesterday(WorkItem wi)
-        {
-            _dailyScrum.AddYesterday(wi);
-            UpdateOutput();
-        }
-
-        private void AddToday(WorkItem wi)
-        {
-            _dailyScrum.AddToday(wi);
-            UpdateOutput();
-        }
-
-        private void RemoveWorkItem(WorkItem wi, bool isToday)
-        {
-            if (isToday)
-            {
-                _dailyScrum.RemoveToday(wi);
-            }
-            else
-            {
-                _dailyScrum.RemoveYesterday(wi);
-            }
-
-            UpdateOutput();
-        }
-
         private static List<User> GetUniqueUsers(IReadOnlyCollection<WorkItem> workItems)
         {
             Dictionary<string, User> users = new();
@@ -227,10 +150,8 @@ namespace AutoScrum.Pages
             return users.Values.ToList();
         }
 
-        private void UserIncludeChanged(User user, bool isIncluded)
+        private void UserIncludeChanged(User user)
         {
-            user.Included = isIncluded;
-            
             ReloadUsers();
             ReloadWorkItems();
         }
@@ -244,8 +165,5 @@ namespace AutoScrum.Pages
             
             ConnectionInfo.EnsureValid();
         }
-        
-        private string GetGenerateForLabel() => "Generate for " + ConnectionInfoRequest.TeamFilterBy;
-        private void OnBlockingUpdated() => UpdateOutput();
     }
 }
