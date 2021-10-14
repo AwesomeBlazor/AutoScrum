@@ -1,24 +1,19 @@
 ﻿@using AutoScrum.Services
 @using AutoScrum.AzureDevOps.Models
+
+@inject DailyScrumService _dailyScrum
+@inject OutputService _outputService
+
 <CollapsibleCard Title="Yesterday" AnchorLink="yesterday-today">
-    <WorkItemListComponent WorkItems="@DailyScrum.Yesterday" IsOnBoard=false OnRemove="RemoveAsync"/>
+    <WorkItemListComponent WorkItems="@_dailyScrum.Yesterday" IsOnBoard=false OnRemove="Remove"/>
 </CollapsibleCard>
 
 @code
 {
-    [Parameter]
-    public DailyScrumService DailyScrum { get; set; } = null!;
-    
-    [Parameter]
-    public EventCallback OnRemove { get; set; }
-
-    private async Task RemoveAsync(WorkItem workItem)
+    private void Remove(WorkItem workItem)
     {
-        DailyScrum.RemoveYesterday(workItem);
+        _dailyScrum.RemoveYesterday(workItem);
 
-        if (OnRemove.HasDelegate)
-        {
-            await OnRemove.InvokeAsync();
-        }
+        _outputService.Update();
     }
 }

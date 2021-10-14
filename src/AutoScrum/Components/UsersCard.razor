@@ -1,4 +1,9 @@
-﻿<CollapsibleCard Title="Users" AnchorLink="user-list" BodyStyle="padding: 0">
+﻿@using AutoScrum.Services
+
+@inject DailyScrumService _dailyScrum
+@inject OutputService _outputService
+
+<CollapsibleCard Title="Users" AnchorLink="user-list" BodyStyle="padding: 0">
     <Table DataSource="Users"
            Responsive
            HidePagination>
@@ -8,7 +13,7 @@
             </Tooltip>
         </Column>
         <ActionColumn Title="Include">
-            <Switch Checked="context.Included" CheckedChanged="async include => await UserIncludeChangedAsync(context, include)" />
+            <Switch Checked="context.Included" CheckedChanged="include => UserIncludeChanged(context, include)" />
         </ActionColumn>
     </Table>
 </CollapsibleCard>
@@ -17,18 +22,12 @@
 {
     [Parameter]
     public List<User> Users { get; set; } = new();
-    
-    [Parameter]
-    public EventCallback<User> OnUserIncludeChanged { get; set; }
-    
-    private async Task UserIncludeChangedAsync(User user, bool isIncluded)
+
+    private void UserIncludeChanged(User user, bool isIncluded)
     {
         user.Included = isIncluded;
 
-        if (OnUserIncludeChanged.HasDelegate)
-        {
-            await OnUserIncludeChanged.InvokeAsync();
-        }
+        _dailyScrum.ReloadWorkItems();
+        _outputService.Update();
     }
-
 }

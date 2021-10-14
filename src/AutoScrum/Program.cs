@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Net.Http;
 using System.Threading.Tasks;
+using AutoScrum.AzureDevOps.Models;
 using Microsoft.AspNetCore.Components.Web;
 
 namespace AutoScrum
@@ -25,6 +26,8 @@ namespace AutoScrum
 	        });
 	        services.AddTransient<ConfigService>();
 	        services.AddTransient<AutoMessageService>();
+	        services.AddTransient<OutputService>();
+	        services.AddTransient<DailyScrumService>();
 
 	        services.AddBlazoredLocalStorage();
 	        services.AddAntDesign();

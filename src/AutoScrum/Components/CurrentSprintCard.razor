@@ -1,42 +1,26 @@
 ﻿@using AutoScrum.AzureDevOps.Models
 @using AutoScrum.Services
+
+@inject OutputService _outputService
+@inject DailyScrumService _dailyScrum
+
 <CollapsibleCard Title="Current Sprint Work Items" AnchorLink="current-sprint">
-    <WorkItemListComponent WorkItems="@DailyScrum!.WorkItems" IsOnBoard=true OnYesterday="async wi => await OnYesterdayAsync(wi)" OnToday="async wi => await OnTodayAsync(wi)"/>
+    <WorkItemListComponent WorkItems="@_dailyScrum.WorkItems" IsOnBoard=true OnYesterday="OnYesterday" OnToday="OnToday"/>
 </CollapsibleCard>
 
 @code
 {
-    [Parameter]
-    public DailyScrumService? DailyScrum { get; set; }
-
-    [Parameter]
-    public EventCallback OnUpdate { get; set; }
-
-    protected override void OnParametersSet()
+    private void OnYesterday(WorkItem workItem)
     {
-        if (DailyScrum is null)
-        {
-            throw new ArgumentNullException(nameof(DailyScrum));
-        }
+        _dailyScrum.AddYesterday(workItem);
+
+        _outputService.Update();
     }
 
-    private async Task OnYesterdayAsync(WorkItem workItem)
+    private void OnToday(WorkItem workItem)
     {
-        DailyScrum!.AddYesterday(workItem);
-
-        if (OnUpdate.HasDelegate)
-        {
-            await OnUpdate.InvokeAsync();
-        }
-    }
-
-    private async Task OnTodayAsync(WorkItem workItem)
-    {
-        DailyScrum!.AddToday(workItem);
+        _dailyScrum.AddToday(workItem);
         
-        if (OnUpdate.HasDelegate)
-        {
-            await OnUpdate.InvokeAsync();
-        }
+        _outputService.Update();
     }
 }

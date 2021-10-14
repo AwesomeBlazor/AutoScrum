@@ -6,36 +6,36 @@
 
         <AutoScrumTitle />
         
-        <ConnectionInfoCard ConnectionInfo="ConnectionInfo" OnSubmit="OnConnectionSubmit"/>
+        <ConnectionInfoCard ConnectionInfo="ConnectionInfo"/>
         
         <Divider/>
 
         @if (!IsPageInitializing)
         {
-            <UsersCard OnUserIncludeChanged="UserIncludeChanged"/>
+            <UsersCard/>
             
             <Divider />
 
-            <BlockingCard IncludedUsers="IncludedUsers" OnBlockingUpdated="UpdateOutput"/>
+            <BlockingCard/>
             
             <Divider />
             
-            <CurrentSprintCard DailyScrum="_dailyScrum" OnUpdate="UpdateOutput"/>
+            <CurrentSprintCard/>
 
             <Divider/>
 
             <Row>
                 <AntDesign.Col Span="12" Xl="12" Md="24" Sm="24">
-                    <YesterdayCard DailyScrum="_dailyScrum" OnRemove="UpdateOutput"/>
+                    <YesterdayCard/>
                 </AntDesign.Col>
                 <AntDesign.Col Span="12" Xl="12" Md="24" Sm="24">
-                    <TodayCard DailyScrum="_dailyScrum" OnRemove="UpdateOutput"/>
+                    <TodayCard/>
                 </AntDesign.Col>
             </Row>
 
             <Divider/>
 
-            <OutputCard Output="@Output"/>
+            <OutputCard />
         }
     </AntDesign.Col>
     <AntDesign.Col Xxl="@AnchorSpan" Xl="@AnchorSpan" Lg="AnchorSpan" Md="0" Sm="0" Xs="0">

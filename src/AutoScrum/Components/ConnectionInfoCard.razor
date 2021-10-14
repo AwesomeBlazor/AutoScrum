@@ -6,6 +6,8 @@
 
 @inject AutoMessageService _messageService
 @inject ConfigService _configService
+@inject DailyScrumService _dailyScrum
+@inject OutputService _outputService
 
 <CollapsibleCard Title="Azure DevOps Connection Info" AnchorLink="connection-info" DefaultVisible>
     @* TODO: Refactor to new component: 'ConnectionInfoForm.razor' *@
@@ -48,19 +50,10 @@
 
 @code
 {
-    public AzureDevOpsConnectionInfoRequest ConnectionInfoRequest { get; set; } = null!;
-    
     [Parameter]
     public AzureDevOpsConnectionInfo? ConnectionInfo { get; set; }
 
-    [Parameter]
-    public EventCallback<AzureDevOpsConnectionInfoRequest> OnSubmit { get; set; }
-    
-    [Parameter]
-    public EventCallback<AzureDevOpsConnectionInfoRequest> OnSave { get; set; }
-    
-    [Parameter]
-    public EventCallback OnDelete { get; set; }
+    private AzureDevOpsConnectionInfoRequest ConnectionInfoRequest { get; set; } = null!;
 
     private Form<AzureDevOpsConnectionInfoRequest> _connectionForm = null!;
     
@@ -93,11 +86,9 @@
         {
             ReloadConnectionInfoFromForm();
 
-            if (OnSubmit.HasDelegate)
-            {
-                await OnSubmit.InvokeAsync(ConnectionInfoRequest);
-            }
-
+            await _dailyScrum.GetDataFromAzureDevOpsAsync(ConnectionInfo);
+            _outputService.Update();
+            
             _messageService.Success("Loaded data from Azure DevOps!");
         }
 
@@ -112,12 +103,7 @@
         {
             ReloadConnectionInfoFromForm();
             await _configService.SetConfig(ConnectionInfo!);
-            
-            if (OnSave.HasDelegate)
-            {
-                await OnSave.InvokeAsync(ConnectionInfoRequest);
-            }
-            
+
             _messageService.Success("Config saved successfully!");
         }
             
@@ -130,11 +116,6 @@
 
         await _configService.Clear();
 
-        if (OnDelete.HasDelegate)
-        {
-            await OnDelete.InvokeAsync();
-        }
-        
         ConnectionInfo = null;
         ConnectionInfoRequest = new AzureDevOpsConnectionInfoRequest();
             
@@ -149,5 +130,4 @@
     {
         ConnectionInfo = new AzureDevOpsConnectionInfo(ConnectionInfoRequest.UserEmail!, ConnectionInfoRequest.PersonalAccessToken!, ConnectionInfoRequest.AzureDevOpsOrganization!, ConnectionInfoRequest.ProjectName!, ConnectionInfoRequest.TeamFilterBy);
     }
-
 }

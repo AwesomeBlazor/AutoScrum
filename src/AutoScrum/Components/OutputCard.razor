@@ -1,9 +1,17 @@
-﻿<CollapsibleCard Title="Output" DefaultVisible AnchorLink="output">
-    @Output
+﻿@using AutoScrum.Services
+@inject OutputService _outputService
+
+@implements IDisposable
+
+<CollapsibleCard Title="Output" DefaultVisible AnchorLink="output">
+    @_outputService.MarkupOutput
 </CollapsibleCard>
 
-@code 
+@code
 {
-    [Parameter]
-    public MarkupString Output { get; set; }
+    protected override void OnInitialized() => _outputService.Updated += OnUpdated;
+
+    private void OnUpdated(object? sender, EventArgs e) => StateHasChanged();
+
+    public void Dispose() => _outputService.Updated -= OnUpdated;
 }

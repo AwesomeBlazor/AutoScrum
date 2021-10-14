@@ -1,6 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
+using System.Threading.Tasks;
+using AutoScrum.AzureDevOps;
+using AutoScrum.AzureDevOps.Config;
 using AutoScrum.AzureDevOps.Models;
 using AutoScrum.Models;
 
@@ -9,24 +13,27 @@ namespace AutoScrum.Services
     public class DailyScrumService
     {
         private readonly DateService _dateService = new();
+        private readonly AutoMessageService _messageService;
 
-        public DailyScrumService()
+        private readonly HttpClient _httpClient = new();
+
+        public DailyScrumService(AutoMessageService messageService)
         {
+            _messageService = messageService;
             TodayMidnight = _dateService.GetDateTimeLocal();
             TodayDay = _dateService.GetToday();
         }
-
-        public List<PersonDailyScrum> TeamsDailyScrum { get; } = new();
-
+        
         public List<WorkItem> Yesterday { get; } = new();
         public List<WorkItem> Today { get; } = new();
         public List<WorkItem> WorkItems { get; } = new();
+        public List<User> Users { get; set; } = new();
+        public List<User> IncludedUsers => Users.Where(x => x.Included).ToList();
         public DateTimeOffset TodayMidnight { get; }
         public DateOnly TodayDay { get; }
 
         public void SetWorkItems(List<WorkItem> workItems, List<User> users)
         {
-            TeamsDailyScrum.Clear();
             Yesterday.Clear();
             Today.Clear();
             WorkItems.Clear();
@@ -83,13 +90,14 @@ namespace AutoScrum.Services
             else
             {
                 var parentId = wi.ParentId!.Value;
+                // TODO: Maybe this should return null, because it looks like we have logic
                 var parent = GetOrCloneParent(list, parentId);
-                if (parent == null)
+                if (parent is null)
                 {
                     // No parent available, add it to top level.
                     list.Add(wi.ShallowClone());
                 }
-                else if (!parent.Children.Any(x => x.Id == wi.Id))
+                else if (parent.Children.All(x => x.Id != wi.Id))
                 {
                     parent.Children.Add(wi.ShallowClone());
                 }
@@ -128,13 +136,89 @@ namespace AutoScrum.Services
             
             return parent;
         }
-
-        public string GenerateReport(List<User> users, bool isMarkdown = true)
+        
+        public void ReloadWorkItems()
         {
-            var yesterday = _dateService.GetPreviousWorkDay(TodayDay);
-            return isMarkdown
-                ? DailyScrumGenerator.GenerateMarkdownReport(TodayDay, yesterday, Today, Yesterday, users)
-                : DailyScrumGenerator.GeneratePlainTextReport(TodayDay, yesterday, Today, Yesterday);
+            foreach (var item in WorkItems)
+            {
+                Console.WriteLine($"{item.Type} {item.Id}: {item.Title}");
+            }
+            
+            SetWorkItems(WorkItems, Users);
+        }
+
+        private AzureDevOpsService GetAzureDevOpsService(AzureDevOpsConnectionInfo? connectionInfo)
+        {
+            EnsureConnectionInfoValid(connectionInfo);
+
+            return new AzureDevOpsService(
+                new AzureDevOpsConfig(connectionInfo!.AzureDevOpsOrganization!,
+                    new Uri($"https://{connectionInfo.AzureDevOpsOrganization}.visualstudio.com"),
+                    connectionInfo.ProjectName!, connectionInfo.UserEmail!, connectionInfo.PersonalAccessToken!),
+                _httpClient);
+        }
+
+        private async Task<Sprint> GetCurrentSprint(AzureDevOpsConnectionInfo? connectionInfo, AzureDevOpsService? azureDevOpsService = null)
+        {
+            azureDevOpsService ??= GetAzureDevOpsService(connectionInfo);
+            
+            var currentSprint = await azureDevOpsService.GetCurrentSprint();
+            Console.WriteLine("Current Sprint: " + currentSprint.Name);
+
+            return currentSprint;
+        }
+        
+        public async Task GetDataFromAzureDevOpsAsync(AzureDevOpsConnectionInfo? connectionInfo)
+        {
+            try
+            {
+                var sprint = await GetCurrentSprint(connectionInfo);
+
+                var workItems = await GetAzureDevOpsService(connectionInfo)
+                    .GetWorkItemsForSprint(sprint, connectionInfo!.TeamFilterBy);
+                
+                Users = GetUniqueUsers(workItems);
+                SetWorkItems(workItems, Users);
+
+                ReloadWorkItems();
+            }
+            catch
+            {
+                _messageService.Error("Critical error while loading data from Azure DevOps");
+                throw;
+            }
+        }
+        
+
+
+        private static List<User> GetUniqueUsers(IReadOnlyCollection<WorkItem> workItems)
+        {
+            Dictionary<string, User> users = new();
+
+            if (!workItems.Any())
+            {
+                return users.Values.ToList();
+            }
+            
+            foreach (var wi in workItems.Where(x => !string.IsNullOrWhiteSpace(x.AssignedToEmail) && !string.IsNullOrWhiteSpace(x.AssignedToDisplayName)))
+            {
+                if (!users.ContainsKey(wi.AssignedToEmail!))
+                {
+                    users.Add(wi.AssignedToEmail!, new User(wi.AssignedToDisplayName!, wi.AssignedToEmail!));
+                }
+            }
+
+            return users.Values.ToList();
+        }
+        
+        private static void EnsureConnectionInfoValid(AzureDevOpsConnectionInfo? connectionInfo)
+        {
+            if (connectionInfo is null)
+            {
+                throw new ArgumentNullException(nameof(connectionInfo));
+            }
+            
+            connectionInfo.EnsureValid();
         }
     }
 }

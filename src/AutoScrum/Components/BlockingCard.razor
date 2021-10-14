@@ -1,5 +1,10 @@
-﻿<CollapsibleCard Title="Blocking" AnchorLink="blocking" BodyStyle="padding: 0">
-    <Table DataSource="IncludedUsers"
+﻿@using AutoScrum.Services
+
+@inject DailyScrumService _dailyScrum
+@inject OutputService _outputService
+
+<CollapsibleCard Title="Blocking" AnchorLink="blocking" BodyStyle="padding: 0">
+    <Table DataSource="_dailyScrum.IncludedUsers"
            Responsive
            HidePagination>
         <Column Title="Name" TData="User">
@@ -15,17 +20,5 @@
 
 @code
 {
-    [Parameter]
-    public List<User>? IncludedUsers { get; set; }
-    
-    [Parameter]
-    public EventCallback OnBlockingUpdated { get; set; }
-
-    private async Task BlockingUpdated()
-    {
-        if (OnBlockingUpdated.HasDelegate)
-        {
-            await OnBlockingUpdated.InvokeAsync();
-        }
-    }
+    private void BlockingUpdated() => _outputService.Update();
 }
