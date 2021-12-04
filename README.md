@@ -14,7 +14,7 @@ Armed with this valuable knowledge, AutoScrum can generate your Daily Scrum emai
 
 Here is how you can use AutoScrum:
 
-[![](https://img.youtube.com/vi/buRHhZtu6X8/hqdefault.jpg)](https://youtu.be/buRHhZtu6X8)
+[![](https://user-images.githubusercontent.com/5943653/144698575-81658ea0-c385-48ee-94ad-389c8d7d9aa1.png)](https://youtu.be/buRHhZtu6X8)
 
 Thanks
 
