@@ -23,7 +23,7 @@ namespace AutoScrum.Pages
         [Inject] public AutoMessageService MessageService { get; set; } = null!;
         [Inject] public DailyScrumService DailyScrum { get; set; } = null!;
         [Inject] public OutputService OutputService { get; set; } = null!;
-        
+
         private AzureDevOpsConnectionInfo? ConnectionInfo { get; set; }
         protected override async Task OnInitializedAsync()
         {
@@ -44,10 +44,22 @@ namespace AutoScrum.Pages
                 IsPageInitializing = false;
                 return;
             }
-            
-            await DailyScrum.GetDataFromAzureDevOpsAsync(ConnectionInfo);
+
+            try
+            {
+                await DailyScrum.GetDataFromAzureDevOpsAsync(ConnectionInfo);
+            }
+            catch (Exception e)
+            {
+                MessageService.Warning("There was an error getting sprint data, see the console for more");
+                Console.WriteLine(e);
+
+                IsPageInitializing = false;
+                return;
+            }
+
             OutputService.Update();
-            
+
             IsPageInitializing = false;
         }
     }

@@ -56,7 +56,7 @@
     private AzureDevOpsConnectionInfoRequest ConnectionInfoRequest { get; set; } = null!;
 
     private Form<AzureDevOpsConnectionInfoRequest> _connectionForm = null!;
-    
+
     private bool _connectionFormLoading;
 
     protected override void OnParametersSet()
@@ -81,14 +81,25 @@
     private async Task SubmitAsync()
     {
         _connectionFormLoading = true;
-            
+
         if (_connectionForm.Validate())
         {
             ReloadConnectionInfoFromForm();
 
-            await _dailyScrum.GetDataFromAzureDevOpsAsync(ConnectionInfo);
+            try
+            {
+                await _dailyScrum.GetDataFromAzureDevOpsAsync(ConnectionInfo);
+            }
+            catch (Exception e)
+            {
+                _messageService.Warning("There was an error getting sprint data, see the console for more");
+                Console.WriteLine(e);
+
+                _connectionFormLoading = false;
+                return;
+            }
             _outputService.Update();
-            
+
             _messageService.Success("Loaded data from Azure DevOps!");
         }
 
@@ -106,7 +117,7 @@
 
             _messageService.Success("Config saved successfully!");
         }
-            
+
         _connectionFormLoading = false;
     }
 
@@ -118,14 +129,14 @@
 
         ConnectionInfo = null;
         ConnectionInfoRequest = new AzureDevOpsConnectionInfoRequest();
-            
+
         _messageService.Success("Config deleted successfully!");
 
         _connectionFormLoading = false;
     }
-    
+
     private string GenerateForLabel() => "Generate for " + ConnectionInfoRequest.TeamFilterBy;
-    
+
     private void ReloadConnectionInfoFromForm()
     {
         ConnectionInfo = new AzureDevOpsConnectionInfo(ConnectionInfoRequest.UserEmail!, ConnectionInfoRequest.PersonalAccessToken!, ConnectionInfoRequest.AzureDevOpsOrganization!, ConnectionInfoRequest.ProjectName!, ConnectionInfoRequest.TeamFilterBy);
