@@ -90,7 +90,7 @@ namespace AutoScrum.Services
                     // No parent available, add it to top level.
                     list.Add(wi.ShallowClone());
                 }
-                else if (!parent.Children.Any(x => x.Id == wi.Id))
+                else if (parent.Children.All(x => x.Id != wi.Id))
                 {
                     parent.Children.Add(wi.ShallowClone());
                 }
