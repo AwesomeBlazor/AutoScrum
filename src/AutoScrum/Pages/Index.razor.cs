@@ -58,16 +58,16 @@ namespace AutoScrum.Pages
                 IsPageInitializing = false;
                 return;
             }
-            
+
             await GetDataFromAzureDevOpsAsync();
-            
+
             IsPageInitializing = false;
         }
 
         private async Task SubmitAsync()
         {
             _connectionFormLoading = true;
-            
+
             if (_connectionForm.Validate())
             {
                 ReloadConnectionInfoFromForm();
@@ -88,7 +88,7 @@ namespace AutoScrum.Pages
                 await ConfigService.SetConfig(ConnectionInfo!);
                 MessageService.Success("Config saved successfully!");
             }
-            
+
             _connectionFormLoading = false;
         }
 
@@ -97,15 +97,15 @@ namespace AutoScrum.Pages
             _connectionFormLoading = true;
 
             await ConfigService.Clear();
-            
+
             ConnectionInfo = null;
             ConnectionInfoRequest = new AzureDevOpsConnectionInfoRequest();
-            
+
             MessageService.Success("Config deleted successfully!");
 
             _connectionFormLoading = false;
         }
-        
+
         private AzureDevOpsService GetAzureDevOpsService()
         {
             EnsureConnectionInfoValid();
@@ -117,21 +117,27 @@ namespace AutoScrum.Pages
                 HttpClient);
         }
 
-        private async Task<Sprint> GetCurrentSprint(AzureDevOpsService? azureDevOpsService = null)
+        private async Task<Sprint?> GetCurrentSprint(AzureDevOpsService? azureDevOpsService = null)
         {
             azureDevOpsService ??= GetAzureDevOpsService();
-            
+
             var currentSprint = await azureDevOpsService.GetCurrentSprint();
-            Console.WriteLine("Current Sprint: " + currentSprint.Name);
+            Console.WriteLine("Current Sprint: " + (currentSprint?.Name ?? "Null"));
 
             return currentSprint;
         }
-        
+
         private async Task GetDataFromAzureDevOpsAsync()
         {
             try
             {
                 var sprint = await GetCurrentSprint();
+
+                if (sprint is null)
+                {
+                    MessageService.Warning("No current sprint found");
+                    return;
+                }
 
                 _cachedWorkItems = await GetAzureDevOpsService()
                     .GetWorkItemsForSprint(sprint, ConnectionInfo!.TeamFilterBy);
@@ -159,14 +165,14 @@ namespace AutoScrum.Pages
         {
             IncludedUsers = Users.Where(x => x.Included).ToList();
         }
-        
+
         private void ReloadWorkItems()
         {
             foreach (var item in _cachedWorkItems!)
             {
                 Console.WriteLine($"{item.Type} {item.Id}: {item.Title}");
             }
-            
+
             _dailyScrum.SetWorkItems(_cachedWorkItems, Users);
 
             UpdateOutput();
@@ -215,7 +221,7 @@ namespace AutoScrum.Pages
             {
                 return users.Values.ToList();
             }
-            
+
             foreach (var wi in workItems.Where(x => !string.IsNullOrWhiteSpace(x.AssignedToEmail) && !string.IsNullOrWhiteSpace(x.AssignedToDisplayName)))
             {
                 if (!users.ContainsKey(wi.AssignedToEmail!))
@@ -230,7 +236,7 @@ namespace AutoScrum.Pages
         private void UserIncludeChanged(User user, bool isIncluded)
         {
             user.Included = isIncluded;
-            
+
             ReloadUsers();
             ReloadWorkItems();
         }
@@ -241,10 +247,10 @@ namespace AutoScrum.Pages
             {
                 throw new ArgumentNullException(nameof(ConnectionInfo));
             }
-            
+
             ConnectionInfo.EnsureValid();
         }
-        
+
         private string GetGenerateForLabel() => "Generate for " + ConnectionInfoRequest.TeamFilterBy;
         private void OnBlockingUpdated() => UpdateOutput();
     }

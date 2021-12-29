@@ -34,7 +34,7 @@ namespace AutoScrum.AzureDevOps
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", Convert.ToBase64String(byteArray));
         }
 
-        public async Task<Sprint> GetCurrentSprint()
+        public async Task<Sprint?> GetCurrentSprint()
         {
             var result = await _httpClient.GetAsync(new Uri(_config.OrganizationUrl, $"/DefaultCollection/{_config.Project}/_apis/work/teamsettings/iterations?api-version=6.0&$timeframe=current"));
 
@@ -53,7 +53,7 @@ namespace AutoScrum.AzureDevOps
                     Name = x.Name,
                     Path = x.Path
                 })
-                .First();
+                .FirstOrDefault();
 
             return currentSprint;
         }
@@ -149,7 +149,7 @@ namespace AutoScrum.AzureDevOps
 
             var groupedItems = workItems;
             if (!enableHierarchy) return groupedItems;
-            
+
             groupedItems = new List<WorkItemModel>();
             foreach (var wi in workItems)
             {
