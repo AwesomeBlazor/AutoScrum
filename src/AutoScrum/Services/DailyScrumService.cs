@@ -84,6 +84,7 @@ namespace AutoScrum.Services
             {
                 var parentId = wi.ParentId!.Value;
                 var parent = GetOrCloneParent(list, parentId);
+
                 if (parent == null)
                 {
                     // No parent available, add it to top level.
@@ -109,23 +110,25 @@ namespace AutoScrum.Services
             // Remove the item from a parent otherwise.
             var parent = list.FirstOrDefault(x => x.Id == wi.ParentId);
             if (parent == null) return;
-            
+
             item = parent.Children.FirstOrDefault(x => x.Id == wi.Id);
             if (item != null) parent.Children.Remove(item);
         }
 
-        private WorkItem GetOrCloneParent(List<WorkItem> list, int parentId)
+        private WorkItem? GetOrCloneParent(List<WorkItem> list, int parentId)
         {
             var parent = list.FirstOrDefault(x => x.Id == parentId);
             if (parent != null) return parent;
 
             parent = WorkItems.FirstOrDefault(x => x.Id == parentId);
 
-            if (parent == null) throw new Exception("Parent cannot be null here");
-            
-            parent = parent.ShallowClone();
-            list.Add(parent);
-            
+            parent = parent?.ShallowClone();
+
+            if (parent is not null)
+            {
+                list.Add(parent);
+            }
+
             return parent;
         }
 
