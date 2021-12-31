@@ -23,7 +23,7 @@ namespace AutoScrum.Services
             TodayMidnight = _dateService.GetDateTimeLocal();
             TodayDay = _dateService.GetToday();
         }
-        
+
         public List<WorkItem> Yesterday { get; } = new();
         public List<WorkItem> Today { get; } = new();
         public List<WorkItem> WorkItems { get; } = new();
@@ -92,6 +92,7 @@ namespace AutoScrum.Services
                 var parentId = wi.ParentId!.Value;
                 // TODO: Maybe this should return null, because it looks like we have logic
                 var parent = GetOrCloneParent(list, parentId);
+
                 if (parent is null)
                 {
                     // No parent available, add it to top level.
@@ -117,33 +118,35 @@ namespace AutoScrum.Services
             // Remove the item from a parent otherwise.
             var parent = list.FirstOrDefault(x => x.Id == wi.ParentId);
             if (parent == null) return;
-            
+
             item = parent.Children.FirstOrDefault(x => x.Id == wi.Id);
             if (item != null) parent.Children.Remove(item);
         }
 
-        private WorkItem GetOrCloneParent(List<WorkItem> list, int parentId)
+        private WorkItem? GetOrCloneParent(List<WorkItem> list, int parentId)
         {
             var parent = list.FirstOrDefault(x => x.Id == parentId);
             if (parent != null) return parent;
 
             parent = WorkItems.FirstOrDefault(x => x.Id == parentId);
 
-            if (parent == null) throw new Exception("Parent cannot be null here");
-            
-            parent = parent.ShallowClone();
-            list.Add(parent);
-            
+            parent = parent?.ShallowClone();
+
+            if (parent is not null)
+            {
+                list.Add(parent);
+            }
+
             return parent;
         }
-        
+
         public void ReloadWorkItems()
         {
             foreach (var item in WorkItems)
             {
                 Console.WriteLine($"{item.Type} {item.Id}: {item.Title}");
             }
-            
+
             SetWorkItems(WorkItems, Users);
         }
 
@@ -161,13 +164,13 @@ namespace AutoScrum.Services
         private async Task<Sprint> GetCurrentSprint(AzureDevOpsConnectionInfo? connectionInfo, AzureDevOpsService? azureDevOpsService = null)
         {
             azureDevOpsService ??= GetAzureDevOpsService(connectionInfo);
-            
+
             var currentSprint = await azureDevOpsService.GetCurrentSprint();
             Console.WriteLine("Current Sprint: " + currentSprint.Name);
 
             return currentSprint;
         }
-        
+
         public async Task GetDataFromAzureDevOpsAsync(AzureDevOpsConnectionInfo? connectionInfo)
         {
             try
@@ -176,7 +179,7 @@ namespace AutoScrum.Services
 
                 var workItems = await GetAzureDevOpsService(connectionInfo)
                     .GetWorkItemsForSprint(sprint, connectionInfo!.TeamFilterBy);
-                
+
                 Users = GetUniqueUsers(workItems);
                 SetWorkItems(workItems, Users);
 
@@ -188,7 +191,7 @@ namespace AutoScrum.Services
                 throw;
             }
         }
-        
+
 
 
         private static List<User> GetUniqueUsers(IReadOnlyCollection<WorkItem> workItems)
@@ -199,7 +202,7 @@ namespace AutoScrum.Services
             {
                 return users.Values.ToList();
             }
-            
+
             foreach (var wi in workItems.Where(x => !string.IsNullOrWhiteSpace(x.AssignedToEmail) && !string.IsNullOrWhiteSpace(x.AssignedToDisplayName)))
             {
                 if (!users.ContainsKey(wi.AssignedToEmail!))
@@ -210,14 +213,14 @@ namespace AutoScrum.Services
 
             return users.Values.ToList();
         }
-        
+
         private static void EnsureConnectionInfoValid(AzureDevOpsConnectionInfo? connectionInfo)
         {
             if (connectionInfo is null)
             {
                 throw new ArgumentNullException(nameof(connectionInfo));
             }
-            
+
             connectionInfo.EnsureValid();
         }
     }
