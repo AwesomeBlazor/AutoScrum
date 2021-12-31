@@ -161,21 +161,27 @@ namespace AutoScrum.Services
                 _httpClient);
         }
 
-        private async Task<Sprint> GetCurrentSprint(AzureDevOpsConnectionInfo? connectionInfo, AzureDevOpsService? azureDevOpsService = null)
+        private async Task<Sprint?> GetCurrentSprint(AzureDevOpsConnectionInfo? connectionInfo, AzureDevOpsService? azureDevOpsService = null)
         {
             azureDevOpsService ??= GetAzureDevOpsService(connectionInfo);
 
             var currentSprint = await azureDevOpsService.GetCurrentSprint();
-            Console.WriteLine("Current Sprint: " + currentSprint.Name);
+            Console.WriteLine("Current Sprint: " + (currentSprint?.Name ?? "Null"));
 
             return currentSprint;
         }
 
-        public async Task GetDataFromAzureDevOpsAsync(AzureDevOpsConnectionInfo? connectionInfo)
+        public async Task<bool> GetDataFromAzureDevOpsAsync(AzureDevOpsConnectionInfo? connectionInfo)
         {
             try
             {
                 var sprint = await GetCurrentSprint(connectionInfo);
+
+                if (sprint is null)
+                {
+                    _messageService.Warning("No current sprint found");
+                    return false;
+                }
 
                 var workItems = await GetAzureDevOpsService(connectionInfo)
                     .GetWorkItemsForSprint(sprint, connectionInfo!.TeamFilterBy);
@@ -188,8 +194,10 @@ namespace AutoScrum.Services
             catch
             {
                 _messageService.Error("Critical error while loading data from Azure DevOps");
-                throw;
+                return false;
             }
+
+            return true;
         }
 
 

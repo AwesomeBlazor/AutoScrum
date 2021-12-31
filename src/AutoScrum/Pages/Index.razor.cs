@@ -31,6 +31,7 @@ namespace AutoScrum.Pages
             {
                 var config = await ConfigService.GetConfig();
                 ConnectionInfo = config;
+                StateHasChanged();
             }
             catch
             {
@@ -47,7 +48,14 @@ namespace AutoScrum.Pages
 
             try
             {
-                await DailyScrum.GetDataFromAzureDevOpsAsync(ConnectionInfo);
+                var success = await DailyScrum.GetDataFromAzureDevOpsAsync(ConnectionInfo);
+
+                if (!success)
+                {
+                    IsPageInitializing = false;
+                    return;
+                }
+
             }
             catch (Exception e)
             {
