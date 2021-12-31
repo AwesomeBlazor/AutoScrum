@@ -37,7 +37,7 @@ namespace AutoScrum.AzureDevOps.Utils
                 : default;
         }
 
-        public static string ParsePersonDisplayName(this AzureDevOpsWorkItem wi, string key)
+        public static string? ParsePersonDisplayName(this AzureDevOpsWorkItem wi, string key)
         {
             if (!wi.Fields.TryGetValue(key, out var value) || value is not Microsoft.VisualStudio.Services.WebApi.IdentityRef identity)
             {
@@ -47,7 +47,7 @@ namespace AutoScrum.AzureDevOps.Utils
             return identity.DisplayName;
         }
 
-        public static string ParsePersonUniqueName(this AzureDevOpsWorkItem wi, string key)
+        public static string? ParsePersonUniqueName(this AzureDevOpsWorkItem wi, string key)
         {
             if (!wi.Fields.TryGetValue(key, out var value) || value is not Microsoft.VisualStudio.Services.WebApi.IdentityRef identity)
             {

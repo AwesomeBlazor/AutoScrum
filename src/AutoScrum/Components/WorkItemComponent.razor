@@ -39,7 +39,8 @@
     </ChildContent>
 </Card>
 @code {
-    [Parameter] public WorkItem? WorkItem { get; set; }
+
+    [Parameter] public WorkItem WorkItem { get; set; } = null!;
     [Parameter] public bool IsOnBoard { get; set; }
     [Parameter] public Action<WorkItem>? OnToday { get; set; }
     [Parameter] public Action<WorkItem>? OnYesterday { get; set; }

@@ -2,7 +2,6 @@
 
 public class User
 {
-    public User() { }
     public User(string displayName, string email)
     {
         DisplayName = displayName;
@@ -14,5 +13,5 @@ public class User
 
     public bool Included { get; set; } = true;
 
-    public string Blocking { get; set; }
+    public string? Blocking { get; set; }
 }

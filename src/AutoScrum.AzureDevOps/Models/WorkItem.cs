@@ -41,8 +41,8 @@ namespace AutoScrum.AzureDevOps.Models
             {
                 "IN PROGRESS" => StateType.InProgress,
                 "DONE" => StateType.Done,
-                "Committed" => StateType.Committed,
-                "Approved" => StateType.Approved,
+                "COMMITTED" => StateType.Committed,
+                "APPROVED" => StateType.Approved,
                 _ => StateType.NotStarted,
             };
 
