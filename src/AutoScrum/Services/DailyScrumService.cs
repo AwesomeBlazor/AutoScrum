@@ -82,14 +82,15 @@ namespace AutoScrum.Services
             }
             else
             {
-                var parentId = wi.ParentId.Value;
+                var parentId = wi.ParentId!.Value;
                 var parent = GetOrCloneParent(list, parentId);
+
                 if (parent == null)
                 {
                     // No parent available, add it to top level.
                     list.Add(wi.ShallowClone());
                 }
-                else if (!parent.Children.Any(x => x.Id == wi.Id))
+                else if (parent.Children.All(x => x.Id != wi.Id))
                 {
                     parent.Children.Add(wi.ShallowClone());
                 }
@@ -108,25 +109,24 @@ namespace AutoScrum.Services
 
             // Remove the item from a parent otherwise.
             var parent = list.FirstOrDefault(x => x.Id == wi.ParentId);
-            if (parent != null)
-            {
-                item = parent.Children.FirstOrDefault(x => x.Id == wi.Id);
-                parent.Children.Remove(item);
-            }
+            if (parent == null) return;
+
+            item = parent.Children.FirstOrDefault(x => x.Id == wi.Id);
+            if (item != null) parent.Children.Remove(item);
         }
 
-        private WorkItem GetOrCloneParent(List<WorkItem> list, int parentId)
+        private WorkItem? GetOrCloneParent(List<WorkItem> list, int parentId)
         {
             var parent = list.FirstOrDefault(x => x.Id == parentId);
-            if (parent == null)
-            {
-                parent = WorkItems.FirstOrDefault(x => x.Id == parentId);
+            if (parent != null) return parent;
 
-                if (parent != null)
-                {
-                    parent = parent?.ShallowClone();
-                    list.Add(parent);
-                }
+            parent = WorkItems.FirstOrDefault(x => x.Id == parentId);
+
+            parent = parent?.ShallowClone();
+
+            if (parent is not null)
+            {
+                list.Add(parent);
             }
 
             return parent;

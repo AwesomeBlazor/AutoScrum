@@ -6,7 +6,6 @@ using AutoScrum.AzureDevOps.Utils;
 using AutoScrum.Core.Models;
 using Microsoft.TeamFoundation.Work.WebApi;
 using Newtonsoft.Json;
-using System.Data;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -42,18 +41,16 @@ namespace AutoScrum.AzureDevOps
         public async Task<Sprint?> GetCurrentSprint()
         {
             var result = await _httpClient.GetAsync(new Uri(_config.OrganizationUrl, $"/DefaultCollection/{_config.Project}/_apis/work/teamsettings/iterations?api-version=6.0&$timeframe=current"));
-            if (result?.IsSuccessStatusCode != true)
-            {
-                return null;
-            }
+
+            result.EnsureSuccessStatusCode();
 
             var json = await result.Content.ReadAsStringAsync();
             var iterations = JsonConvert.DeserializeObject<AzureDevOpsListResult<TeamSettingsIteration>>(json);
-            Console.WriteLine("Number of iterations: " + iterations?.Count);
+            Console.WriteLine("Number of iterations: " + iterations.Count);
 
             var currentSprint = iterations
-                ?.Value
-                ?.Take(1)
+                .Value
+                .Take(1)
                 .Select(x => new Sprint
                 {
                     Id = x.Id,
@@ -84,7 +81,7 @@ namespace AutoScrum.AzureDevOps
             return await GetWorkItems(wiIds);
         }
 
-        public async Task<List<WorkItemModel>?> GetWorkItemsForSprint(Sprint sprint, TeamFilterBy teamFilterBy)
+        public async Task<List<WorkItemModel>> GetWorkItemsForSprint(Sprint sprint, TeamFilterBy teamFilterBy)
         {
             var query = "SELECT [State], [Title] FROM WorkItems WHERE ";
             if (teamFilterBy == TeamFilterBy.Me)
@@ -101,10 +98,7 @@ namespace AutoScrum.AzureDevOps
                 query
             });
 
-            if (result?.IsSuccessStatusCode != true)
-            {
-                return null;
-            }
+            result.EnsureSuccessStatusCode();
 
             var json = await result.Content.ReadAsStringAsync();
             var iterationWis = JsonConvert.DeserializeObject<AzureDevOpsWiqlResult>(json);
@@ -116,7 +110,7 @@ namespace AutoScrum.AzureDevOps
             return await GetWorkItems(wiIds);
         }
 
-        public async Task<List<WorkItemModel>?> GetWorkItems(IEnumerable<int> ids, bool enableHierarchy = true, bool includeAssignTo = true, bool includeDetails = false)
+        public async Task<List<WorkItemModel>> GetWorkItems(IEnumerable<int> ids, bool enableHierarchy = true, bool includeAssignTo = true, bool includeDetails = false)
         {
             var idsAsString = string.Join(",", ids.Select(x => x.ToString()));
 
@@ -134,16 +128,12 @@ namespace AutoScrum.AzureDevOps
 
 
             var result = await _httpClient.GetAsync(new Uri(_config.OrganizationUrl, $"/DefaultCollection/{_config.Project}/_apis/wit/workitems?ids={idsAsString}&fields={fields}&api-version=6.0"));
-            if (result?.IsSuccessStatusCode != true)
-            {
-                return null;
-            }
+            result.EnsureSuccessStatusCode();
 
             var json = await result.Content.ReadAsStringAsync();
             var devOpsWorkItems = JsonConvert.DeserializeObject<AzureDevOpsListResult<AzureDevOpsWorkItem>>(json);
 
-            var workItems = devOpsWorkItems
-                ?.Value
+            var workItems = devOpsWorkItems.Value
                 .Select(x => new WorkItemModel
                 {
                     Id = x.Id,
@@ -162,21 +152,20 @@ namespace AutoScrum.AzureDevOps
                 .ToList();
 
             var groupedItems = workItems;
-            if (workItems != null && enableHierarchy)
+            if (!enableHierarchy) return groupedItems;
+
+            groupedItems = new List<WorkItemModel>();
+            foreach (var wi in workItems)
             {
-                groupedItems = new List<WorkItemModel>();
-                foreach (var wi in workItems)
+                wi.Parent = workItems.FirstOrDefault(x => x.Id == wi.ParentId);
+                if (wi.Parent != null)
                 {
-                    wi.Parent = workItems.FirstOrDefault(x => x.Id == wi.ParentId);
-                    if (wi.Parent != null)
-                    {
-                        wi.Parent.Children.Add(wi);
-                    }
-                    else
-                    {
-                        // Only top level items are added.
-                        groupedItems.Add(wi);
-                    }
+                    wi.Parent.Children.Add(wi);
+                }
+                else
+                {
+                    // Only top level items are added.
+                    groupedItems.Add(wi);
                 }
             }
 

@@ -3,21 +3,19 @@
 
 <div style="display: flex; justify-content: center; align-items: center; flex-direction: row">
     <Title Level="4" Style="padding: 0; margin: 0 0.5rem 0 0">Theme: </Title>
-    @if (_themeSettings is null)
+    @if (ThemeProvider.ThemeSettings is null)
     {
         <Spin />
     }
     else
     {
-        <EnumSelect TEnum="AntTheme" Value="_themeSettings.Theme" ValueChanged="ThemeChangedAsync" Style="width: 150px"/>
+        <EnumSelect TEnum="AntTheme" Value="ThemeProvider.ThemeSettings.Theme" ValueChanged="ThemeChangedAsync" Style="width: 150px"/>
     }
 </div>
 @code 
 {
     [CascadingParameter]
-    public ThemeProvider ThemeProvider { get; set; }
-    
-    private ThemeSettings _themeSettings;
+    public ThemeProvider ThemeProvider { get; set; } = null!;
     
     protected override async Task OnInitializedAsync()
     {
@@ -26,11 +24,9 @@
 
     private async Task ThemeChangedAsync(AntTheme theme)
     {
-        _themeSettings ??= new();
-        
-        _themeSettings.Theme = theme;
+        ThemeProvider.ThemeSettings!.Theme = theme;
 
-        await _configService.SetTheme(_themeSettings);
+        await _configService.SetTheme(ThemeProvider.ThemeSettings);
 
         await ThemeProvider.ThemeChanged();
     }

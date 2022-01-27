@@ -19,19 +19,19 @@
 @code
 {
     [Parameter]
-    public RenderFragment ChildContent { get; set; }
+    public RenderFragment ChildContent { get; set; } = null!;
 
     [Parameter]
-    public string Title { get; set; }
+    public string? Title { get; set; }
     
     [Parameter]
     public bool DefaultVisible { get; set; }
     
     [Parameter]
-    public string AnchorLink { get; set; }
+    public string? AnchorLink { get; set; }
 
     [Parameter]
-    public string BodyStyle { get; set; }
+    public string? BodyStyle { get; set; }
 
     private bool _visible;
 
