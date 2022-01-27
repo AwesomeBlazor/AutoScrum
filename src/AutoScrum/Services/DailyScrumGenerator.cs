@@ -69,7 +69,7 @@ namespace AutoScrum.Services
             foreach (var wi in workItems)
             {
                 var userTasks = wi.Children.Where(x => x.AssignedToEmail == userEmail).ToList();
-                if (wi.AssignedToEmail != null && !userTasks.Any())
+                if (wi.AssignedToEmail != userEmail && !userTasks.Any())
                 {
                     continue;
                 }
