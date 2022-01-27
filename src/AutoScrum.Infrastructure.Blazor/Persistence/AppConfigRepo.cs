@@ -21,4 +21,9 @@ internal class AppConfigRepo
 
         return container?.Item;
     }
+
+    public async Task SaveAppConfig(AppConfig appConfig)
+    {
+        await _localStorage.SetItemAsync(AppConfigContainer.StorageKey, new AppConfigContainer(appConfig));
+    }
 }

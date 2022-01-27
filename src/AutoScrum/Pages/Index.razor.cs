@@ -52,7 +52,8 @@ namespace AutoScrum.Pages
                     var project = await ConfigService.GetCurrentProject();
                     if (project is ProjectConfigAzureDevOps azureDevOpsProject)
                     {
-                        ConnectionInfoRequest = ConnectionInfo = azureDevOpsProject;
+                        ConnectionInfo = azureDevOpsProject;
+                        ConnectionInfoRequest = ConnectionInfo.Clone();
 
                         // TODO: This should be postponed so that theme and UI can be updated.
                         await GetDataFromAzureDevOpsAsync();
@@ -71,8 +72,6 @@ namespace AutoScrum.Pages
                 IsPageInitializing = false;
                 return;
             }
-
-            await GetDataFromAzureDevOpsAsync();
 
             IsPageInitializing = false;
         }
@@ -98,7 +97,15 @@ namespace AutoScrum.Pages
             if (_connectionForm.Validate())
             {
                 ReloadConnectionInfoFromForm();
+
+                ConnectionInfo = await ConfigService.AddOrUpdateProject(ConnectionInfo);
+                ConnectionInfoRequest = ConnectionInfo.Clone();
+
+                // Atm, only current project is supported.
+                await ConfigService.SetCurrentProject(ConnectionInfo.Id);
+
                 await OldConfigService.SetConfig(ConnectionInfo);
+
                 MessageService.Success("Config saved successfully!");
             }
 
@@ -109,6 +116,7 @@ namespace AutoScrum.Pages
         {
             _connectionFormLoading = true;
 
+            await ConfigService.RemoveProject(ConnectionInfo);
             await OldConfigService.Clear();
 
             ConnectionInfo = null;
@@ -140,7 +148,6 @@ namespace AutoScrum.Pages
             try
             {
                 var sprint = await GetCurrentSprint();
-
                 if (sprint is null)
                 {
                     MessageService.Warning("No current sprint found");

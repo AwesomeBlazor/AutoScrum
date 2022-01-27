@@ -17,8 +17,8 @@ internal class AppConfigMigration : IMigration<AppConfigContainer, AppConfig>
 
     public async Task<AppConfigContainer?> Migrate(AppConfigContainer? container)
     {
-        string originalConfigKey = "current-config";
-        string originalThemeKey = "current-theme";
+        const string originalConfigKey = "current-config";
+        const string originalThemeKey = "current-theme";
 
         container ??= new AppConfigContainer();
         container.Item ??= new AppConfig();
@@ -26,7 +26,7 @@ internal class AppConfigMigration : IMigration<AppConfigContainer, AppConfig>
         var config = await _localStorage.GetItemAsync<ProjectConfigAzureDevOps>(originalConfigKey);
         if (config != null)
         {
-            container.Item.SelectedProject = "default";
+            container.Item.SelectedProjectId = 1;
 
             ProjectsMetadataContainer metadataContainer = new()
             {
@@ -34,6 +34,7 @@ internal class AppConfigMigration : IMigration<AppConfigContainer, AppConfig>
                     {
                         new ProjectMetadata
                         {
+                            Id = 1,
                             Name = "Default",
                             Path = "default",
                             ProjectType = ProjectType.AzureDevOps
@@ -43,6 +44,7 @@ internal class AppConfigMigration : IMigration<AppConfigContainer, AppConfig>
 
             await _localStorage.SetItemAsync(metadataContainer.StorageTableName, metadataContainer);
 
+            config.Id = 1;
             ProjectContainer projectContainer = new()
             {
                 Item = new ProjectStorageItem
@@ -63,9 +65,8 @@ internal class AppConfigMigration : IMigration<AppConfigContainer, AppConfig>
             container.Item.ThemeSettings = theme;
         }
 
-        container.Version = ProjectsMetadataContainer.CurrentVersion;
-
-        // TODO: Save this when fully tested.
+        container.Version = AppConfigContainer.CurrentVersion;
+        await _localStorage.SetItemAsync(AppConfigContainer.StorageKey, container);
 
         return container;
     }

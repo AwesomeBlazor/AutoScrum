@@ -8,6 +8,7 @@ namespace AutoScrum.Infrastructure.Blazor.Services;
 internal class ConfigService : IConfigService
 {
     public const string AppConfigCacheKey = "AppConfig";
+    public const string ProjectsMetaCacheKey = "ProjectsMeta";
 
     private readonly AppConfigRepo _appConfigRepo;
     private readonly ProjectsMetadataRepo _projectsMetadataRepo;
@@ -24,19 +25,13 @@ internal class ConfigService : IConfigService
 
     public async Task<AppConfig> GetAppConfig()
     {
-        if (_memoryCache.TryGetValue(AppConfigCacheKey, out AppConfig? config) && config != null)
+        return await _memoryCache.GetOrCreateAsync(AppConfigCacheKey, async entity =>
         {
+            var config = await _appConfigRepo.GetAppConfig();
+            entity.SetAbsoluteExpiration(TimeSpan.FromMinutes(config != null ? 5 : 0.1));
+
             return config;
-        }
-
-        config = await _appConfigRepo.GetAppConfig();
-        if (config != null)
-        {
-            _memoryCache.Set(AppConfigCacheKey, config, TimeSpan.FromMinutes(5));
-        }
-
-        return config
-            ?? new AppConfig();
+        }) ?? new AppConfig();
     }
 
     public async Task<ThemeSettings> GetTheme()
@@ -46,18 +41,107 @@ internal class ConfigService : IConfigService
         return config?.ThemeSettings ?? new();
     }
 
-    public async Task SetTheme(ThemeSettings theme) { }
+    public async Task SetTheme(ThemeSettings theme)
+    {
+        AppConfig? config = await GetAppConfig();
+        config.ThemeSettings = theme;
+
+        await UpdateConfig(config);
+    }
+
+    public async Task SetCurrentProject(int projectId)
+    {
+        AppConfig? config = await GetAppConfig();
+        if (config.SelectedProjectId == projectId)
+        {
+            return;
+        }
+
+        config.SelectedProjectId = projectId;
+        await UpdateConfig(config);
+    }
 
     public async Task<ProjectConfig?> GetCurrentProject()
     {
-        ProjectConfig? project = null;
         AppConfig? config = await GetAppConfig();
-        if (config != null)
+        ProjectMetadata? projectMeta = await GetProjectMetadata(config.SelectedProjectId);
+        return await _projectRepo.Get(projectMeta?.Path);
+    }
+
+    public async Task<List<ProjectMetadata>> GetProjectsMetadata()
+    {
+        return await _memoryCache.GetOrCreateAsync(ProjectsMetaCacheKey, async entity =>
         {
-            string selectedProject = config.SelectedProject ?? "default";
-            project = await _projectRepo.GetProject(selectedProject);
+            var projects = await _projectsMetadataRepo.GetProjects();
+            entity.SetAbsoluteExpiration(TimeSpan.FromMinutes(5));
+
+            return projects;
+        }) ?? new List<ProjectMetadata>();
+    }
+
+    public async Task<TProjectConfig> AddOrUpdateProject<TProjectConfig>(TProjectConfig project)
+        where TProjectConfig : ProjectConfig
+    {
+        List<ProjectMetadata> projectsMeta = await GetProjectsMetadata();
+        ProjectMetadata? projectMetadata = projectsMeta.Find(x => x.Id == project.Id);
+        if (project.Id == 0 || projectMetadata == null)
+        {
+            // Max fails if there are no values.
+            project.Id = projectsMeta.Count > 0
+                ? projectsMeta.Max(x => x.Id) + 1
+                : 1;
+            project.ProjectName ??= "default";
+            projectMetadata = new()
+            {
+                Id = project.Id,
+                Name = project.ProjectName,
+                Path = project.Id.ToString(),
+                ProjectType = project.ProjectType
+            };
         }
 
+        return await AddOrUpdateProject(projectMetadata, project);
+    }
+
+    public async Task<TProjectConfig> AddOrUpdateProject<TProjectConfig>(ProjectMetadata projectMetadata, TProjectConfig project)
+        where TProjectConfig : ProjectConfig
+    {
+        await _projectsMetadataRepo.AddOrUpdate(projectMetadata);
+        await _projectRepo.AddOrUpdate(projectMetadata, project);
+
+        _memoryCache.Remove(ProjectsMetaCacheKey);
+
         return project;
+    }
+
+    public async Task RemoveProject(ProjectMetadata projectMetadata)
+    {
+        string? path = await _projectsMetadataRepo.Remove(projectMetadata);
+        await _projectRepo.Remove(path);
+
+        _memoryCache.Remove(ProjectsMetaCacheKey);
+    }
+
+    public async Task RemoveProject(ProjectConfig project)
+    {
+        var projectsMeta = await GetProjectsMetadata();
+        var projectToRemove = projectsMeta.Find(x => x.Id == project.Id);
+        if (projectToRemove != null)
+        {
+            await RemoveProject(projectToRemove);
+        }
+    }
+
+    private async Task UpdateConfig(AppConfig config)
+    {
+        await _appConfigRepo.SaveAppConfig(config);
+
+        _memoryCache.Remove(AppConfigCacheKey);
+    }
+
+    private async Task<ProjectMetadata?> GetProjectMetadata(int projectId)
+    {
+        List<ProjectMetadata>? projectsMeta = await GetProjectsMetadata();
+        return projectsMeta.Find(x => x.Id == projectId);
     }
 }

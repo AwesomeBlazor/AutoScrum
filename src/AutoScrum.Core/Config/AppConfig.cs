@@ -6,6 +6,6 @@
 /// </summary>
 public class AppConfig
 {
-    public string? SelectedProject { get; set; }
+    public int SelectedProjectId { get; set; }
     public ThemeSettings? ThemeSettings { get; set; }
 }

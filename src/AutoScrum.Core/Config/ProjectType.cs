@@ -8,6 +8,6 @@
 /// </summary>
 public enum ProjectType
 {
-    AzureDevOps,
+    AzureDevOps = 0,
     GitHub
 }

@@ -14,6 +14,12 @@ internal class AppConfigContainer : StorageContainer<AppConfig>
         StorageTableName = StorageKey;
     }
 
+    public AppConfigContainer(AppConfig appConfig)
+        : this()
+    {
+        Item = appConfig;
+    }
+
     [JsonIgnore]
     public override bool ShouldMigrate => Version < CurrentVersion;
 }

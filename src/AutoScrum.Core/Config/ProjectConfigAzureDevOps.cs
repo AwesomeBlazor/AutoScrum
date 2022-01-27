@@ -18,6 +18,7 @@ public class ProjectConfigAzureDevOps : ProjectConfig
     public ProjectConfigAzureDevOps Clone()
         => new()
         {
+            Id = Id,
             UserEmail = UserEmail,
             PersonalAccessToken = PersonalAccessToken,
             AzureDevOpsOrganization = AzureDevOpsOrganization,
