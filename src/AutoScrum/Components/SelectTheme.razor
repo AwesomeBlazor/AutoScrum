@@ -3,7 +3,7 @@
 
 <div style="display: flex; justify-content: center; align-items: center; flex-direction: row">
     <Title Level="4" Style="padding: 0; margin: 0 0.5rem 0 0">Theme: </Title>
-    @if (ThemeProvider.ThemeSettings is null)
+    @if (ThemeProvider?.ThemeSettings is null)
     {
         <Spin />
     }
@@ -17,11 +17,6 @@
     [CascadingParameter]
     public ThemeProvider ThemeProvider { get; set; } = null!;
     
-    protected override async Task OnInitializedAsync()
-    {
-        _themeSettings = await _configService.GetTheme();
-    }
-
     private async Task ThemeChangedAsync(AntTheme theme)
     {
         ThemeProvider.ThemeSettings!.Theme = theme;

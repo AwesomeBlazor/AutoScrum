@@ -1,8 +1,7 @@
-﻿namespace AutoScrum.AzureDevOps.Models
+﻿namespace AutoScrum.AzureDevOps.Models;
+
+public class WorkItemLink
 {
-    public class WorkItemLink
-    {
-        public int Id { get; set; }
-        public string Url { get; set; } = string.Empty;
-    }
+    public int Id { get; set; }
+    public string Url { get; set; } = string.Empty;
 }

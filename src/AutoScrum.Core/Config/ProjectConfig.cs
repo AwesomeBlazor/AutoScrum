@@ -1,9 +1,8 @@
-﻿namespace AutoScrum.Core.Config
+﻿namespace AutoScrum.Core.Config;
+
+public abstract class ProjectConfig
 {
-    public abstract class ProjectConfig
-    {
-        public string ProjectName { get; set; }
-        public ProjectType ProjectType { get; set; }
-        public int Version { get; set; } = 1;
-    }
+    public string ProjectName { get; set; } = null!;
+    public ProjectType ProjectType { get; set; }
+    public int Version { get; set; } = 1;
 }

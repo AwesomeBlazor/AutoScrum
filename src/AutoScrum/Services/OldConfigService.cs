@@ -3,41 +3,40 @@ using System.Threading.Tasks;
 using AutoScrum.Core.Config;
 using Blazored.LocalStorage;
 
-namespace AutoScrum.Services
+namespace AutoScrum.Services;
+
+public class OldConfigService
 {
-    public class OldConfigService
+    private const string ConfigKey = "current-config";
+
+    private readonly ILocalStorageService _localStorage;
+
+    public OldConfigService(ILocalStorageService localStorage)
     {
-        private const string ConfigKey = "current-config";
-        
-        private readonly ILocalStorageService _localStorage;
+        _localStorage = localStorage;
+    }
 
-        public OldConfigService(ILocalStorageService localStorage)
+    public async Task SetConfig(ProjectConfigAzureDevOps config)
+    {
+        try
         {
-            _localStorage = localStorage;
+            await _localStorage.SetItemAsync(ConfigKey, config);
         }
-
-        public async Task SetConfig(ProjectConfigAzureDevOps config)
+        catch (Exception ex)
         {
-            try
-            {
-                await _localStorage.SetItemAsync(ConfigKey, config);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.ToString());
-            }
+            Console.WriteLine(ex.ToString());
         }
+    }
 
-        public async Task Clear()
+    public async Task Clear()
+    {
+        try
         {
-            try
-            {
-                await _localStorage.RemoveItemAsync(ConfigKey);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.ToString());
-            }
+            await _localStorage.RemoveItemAsync(ConfigKey);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.ToString());
         }
     }
 }

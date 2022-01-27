@@ -38,6 +38,7 @@ namespace AutoScrum.Pages
         private MarkupString Output { get; set; } = (MarkupString)"";
 
         private ProjectConfigAzureDevOps ConnectionInfo { get; set; } = new();
+        private ProjectConfigAzureDevOps ConnectionInfoRequest { get; set; } = new();
         private List<User> Users { get; set; } = new();
         private List<User> IncludedUsers { get; set; } = new();
 
@@ -51,7 +52,7 @@ namespace AutoScrum.Pages
                     var project = await ConfigService.GetCurrentProject();
                     if (project is ProjectConfigAzureDevOps azureDevOpsProject)
                     {
-                        ConnectionInfo = azureDevOpsProject;
+                        ConnectionInfoRequest = ConnectionInfo = azureDevOpsProject;
 
                         // TODO: This should be postponed so that theme and UI can be updated.
                         await GetDataFromAzureDevOpsAsync();
@@ -111,7 +112,7 @@ namespace AutoScrum.Pages
             await OldConfigService.Clear();
 
             ConnectionInfo = null;
-            ConnectionInfoRequest = new AzureDevOpsConnectionInfoRequest();
+            ConnectionInfoRequest = new ProjectConfigAzureDevOps();
             MessageService.Success("Config deleted successfully!");
 
             _connectionFormLoading = false;
@@ -121,12 +122,7 @@ namespace AutoScrum.Pages
         {
             EnsureConnectionInfoValid();
 
-            // TODO: new(ConnectionInfo, HttpClient);
-            return new AzureDevOpsService(
-                new AzureDevOpsConfig(ConnectionInfo!.AzureDevOpsOrganization!,
-                    new Uri($"https://{ConnectionInfo.AzureDevOpsOrganization}.visualstudio.com"),
-                    ConnectionInfo.ProjectName!, ConnectionInfo.UserEmail!, ConnectionInfo.PersonalAccessToken!),
-                HttpClient);
+            return new (ConnectionInfo, HttpClient);
         }
 
         private async Task<Sprint?> GetCurrentSprint(AzureDevOpsService? azureDevOpsService = null)
@@ -170,7 +166,7 @@ namespace AutoScrum.Pages
 
         private void ReloadConnectionInfoFromForm()
         {
-            ConnectionInfo = new AzureDevOpsConnectionInfo(ConnectionInfoRequest.UserEmail!, ConnectionInfoRequest.PersonalAccessToken!, ConnectionInfoRequest.AzureDevOpsOrganization!, ConnectionInfoRequest.ProjectName!, ConnectionInfoRequest.TeamFilterBy);
+            ConnectionInfo = ConnectionInfoRequest.Clone();
         }
 
         private void ReloadUsers()

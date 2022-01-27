@@ -1,8 +1,7 @@
-﻿namespace AutoScrum.Core.Models
+﻿namespace AutoScrum.Core.Models;
+
+public enum TeamFilterBy
 {
-    public enum TeamFilterBy
-    {
-        Me,
-        Team
-    }
+    Me,
+    Team
 }

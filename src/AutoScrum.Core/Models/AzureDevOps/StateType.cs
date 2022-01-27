@@ -1,11 +1,10 @@
-﻿namespace AutoScrum.Core.Models
+﻿namespace AutoScrum.Core.Models;
+
+public enum StateType
 {
-    public enum StateType
-    {
-        NotStarted,
-        InProgress,
-        Committed,
-        Approved,
-        Done
-    }
+    NotStarted,
+    InProgress,
+    Committed,
+    Approved,
+    Done
 }

@@ -1,10 +1,9 @@
-﻿namespace AutoScrum.Core.Models
+﻿namespace AutoScrum.Core.Models;
+
+public enum WorkItemType
 {
-    public enum WorkItemType
-    {
-        PBI,
-        Task,
-        Bug,
-        UserStory
-    }
+    PBI,
+    Task,
+    Bug,
+    UserStory
 }

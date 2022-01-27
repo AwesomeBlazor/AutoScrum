@@ -1,14 +1,13 @@
 ﻿using AutoScrum.Core.Config;
 using System.Threading.Tasks;
 
-namespace AutoScrum.Core.Services
-{
-    public interface IConfigService
-    {
-        Task<AppConfig> GetAppConfig();
-        Task<ThemeSettings> GetTheme();
-        Task SetTheme(ThemeSettings theme);
+namespace AutoScrum.Core.Services;
 
-        Task<ProjectConfig?> GetCurrentProject();
-    }
+public interface IConfigService
+{
+    Task<AppConfig> GetAppConfig();
+    Task<ThemeSettings> GetTheme();
+    Task SetTheme(ThemeSettings theme);
+
+    Task<ProjectConfig?> GetCurrentProject();
 }
