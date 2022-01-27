@@ -134,7 +134,7 @@ namespace AutoScrum.AzureDevOps
             var devOpsWorkItems = JsonConvert.DeserializeObject<AzureDevOpsListResult<AzureDevOpsWorkItem>>(json);
 
             var workItems = devOpsWorkItems.Value
-                .Select(x => new WorkItemModel
+                .ConvertAll(x => new WorkItemModel
                 {
                     Id = x.Id,
                     Title = x.ParseAsString("System.Title"),
@@ -148,8 +148,7 @@ namespace AutoScrum.AzureDevOps
                     AssignedToEmail = x.ParsePersonUniqueName("System.AssignedTo"),
                     Blocked = x.ParseAsString("Microsoft.VSTS.CMMI.Blocked"),
                     Url = x.Url
-                })
-                .ToList();
+                });
 
             var groupedItems = workItems;
             if (!enableHierarchy) return groupedItems;
@@ -157,7 +156,7 @@ namespace AutoScrum.AzureDevOps
             groupedItems = new List<WorkItemModel>();
             foreach (var wi in workItems)
             {
-                wi.Parent = workItems.FirstOrDefault(x => x.Id == wi.ParentId);
+                wi.Parent = workItems.Find(x => x.Id == wi.ParentId);
                 if (wi.Parent != null)
                 {
                     wi.Parent.Children.Add(wi);

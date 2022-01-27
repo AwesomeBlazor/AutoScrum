@@ -185,7 +185,7 @@ namespace AutoScrum.Pages
         {
             foreach (var item in _cachedWorkItems!)
             {
-                Console.WriteLine($"{item.Type} {item.Id}: {item.Title}");
+                Console.WriteLine($"{item.Type} {item.Id}: {item.Title} - {item.AssignedToEmail}");
             }
 
             _dailyScrum.SetWorkItems(_cachedWorkItems, Users);
@@ -237,6 +237,7 @@ namespace AutoScrum.Pages
                 return users.Values.ToList();
             }
 
+            // TODO: If a user is only in a task but no PBI, this won't include them.
             foreach (var wi in workItems.Where(x => !string.IsNullOrWhiteSpace(x.AssignedToEmail) && !string.IsNullOrWhiteSpace(x.AssignedToDisplayName)))
             {
                 if (!users.ContainsKey(wi.AssignedToEmail!))
