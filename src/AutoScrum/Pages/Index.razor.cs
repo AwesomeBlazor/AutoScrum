@@ -1,16 +1,17 @@
-﻿using System;
+﻿using AntDesign;
+using AutoScrum.AzureDevOps;
+using AutoScrum.Core.Config;
+using AutoScrum.Core.Models;
+using AutoScrum.Core.Services;
+using AutoScrum.Models;
+using AutoScrum.Services;
+using Microsoft.AspNetCore.Components;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
-using AntDesign;
-using AutoScrum.AzureDevOps.Config;
-using AutoScrum.AzureDevOps.Models;
-using AutoScrum.AzureDevOps;
-using AutoScrum.Services;
-using Microsoft.AspNetCore.Components;
-using AutoScrum.Models;
-using ConfigService = AutoScrum.Services.ConfigService;
+using OldConfigService = AutoScrum.Services.OldConfigService;
 
 namespace AutoScrum.Pages
 {
@@ -21,21 +22,23 @@ namespace AutoScrum.Pages
         private const int ContentSpan = 21;
         private const int AnchorSpan = 3;
 
-        private Form<AzureDevOpsConnectionInfoRequest> _connectionForm = null!;
+        private Form<ProjectConfigAzureDevOps> _connectionForm;
         private bool _connectionFormLoading;
 
         private bool IsPageInitializing { get; set; } = true;
 
         private List<WorkItem>? _cachedWorkItems;
 
-        [Inject] public HttpClient HttpClient { get; set; } = null!;
-        [Inject] public ConfigService ConfigService { get; set; } = null!;
-        [Inject] public AutoMessageService MessageService { get; set; } = null!;
+        [Inject] public HttpClient HttpClient { get; set; }
+        // TODO: Remove when all is updated.
+        [Inject] public OldConfigService OldConfigService { get; set; }
+        [Inject] public IConfigService ConfigService { get; set; }
+        [Inject] public MessageService MessageService { get; set; }
 
         private MarkupString Output { get; set; } = (MarkupString)"";
 
-        private AzureDevOpsConnectionInfo? ConnectionInfo { get; set; }
-        private AzureDevOpsConnectionInfoRequest ConnectionInfoRequest { get; set; } = new();
+        private ProjectConfigAzureDevOps ConnectionInfo { get; set; } = new();
+        private ProjectConfigAzureDevOps ConnectionInfoRequest { get; set; } = new();
         private List<User> Users { get; set; } = new();
         private List<User> IncludedUsers { get; set; } = new();
 
@@ -43,8 +46,19 @@ namespace AutoScrum.Pages
         {
             try
             {
-                var config = await ConfigService.GetConfig();
-                ConnectionInfo = config;
+                AppConfig config = await ConfigService.GetAppConfig();
+                if (config != null)
+                {
+                    var project = await ConfigService.GetCurrentProject();
+                    if (project is ProjectConfigAzureDevOps azureDevOpsProject)
+                    {
+                        ConnectionInfo = azureDevOpsProject;
+                        ConnectionInfoRequest = ConnectionInfo.Clone();
+
+                        // TODO: This should be postponed so that theme and UI can be updated.
+                        await GetDataFromAzureDevOpsAsync();
+                    }
+                }
             }
             catch
             {
@@ -58,8 +72,6 @@ namespace AutoScrum.Pages
                 IsPageInitializing = false;
                 return;
             }
-
-            await GetDataFromAzureDevOpsAsync();
 
             IsPageInitializing = false;
         }
@@ -85,7 +97,15 @@ namespace AutoScrum.Pages
             if (_connectionForm.Validate())
             {
                 ReloadConnectionInfoFromForm();
-                await ConfigService.SetConfig(ConnectionInfo!);
+
+                ConnectionInfo = await ConfigService.AddOrUpdateProject(ConnectionInfo);
+                ConnectionInfoRequest = ConnectionInfo.Clone();
+
+                // Atm, only current project is supported.
+                await ConfigService.SetCurrentProject(ConnectionInfo.Id);
+
+                await OldConfigService.SetConfig(ConnectionInfo);
+
                 MessageService.Success("Config saved successfully!");
             }
 
@@ -96,11 +116,11 @@ namespace AutoScrum.Pages
         {
             _connectionFormLoading = true;
 
-            await ConfigService.Clear();
+            await ConfigService.RemoveProject(ConnectionInfo);
+            await OldConfigService.Clear();
 
             ConnectionInfo = null;
-            ConnectionInfoRequest = new AzureDevOpsConnectionInfoRequest();
-
+            ConnectionInfoRequest = new ProjectConfigAzureDevOps();
             MessageService.Success("Config deleted successfully!");
 
             _connectionFormLoading = false;
@@ -110,11 +130,7 @@ namespace AutoScrum.Pages
         {
             EnsureConnectionInfoValid();
 
-            return new AzureDevOpsService(
-                new AzureDevOpsConfig(ConnectionInfo!.AzureDevOpsOrganization!,
-                    new Uri($"https://{ConnectionInfo.AzureDevOpsOrganization}.visualstudio.com"),
-                    ConnectionInfo.ProjectName!, ConnectionInfo.UserEmail!, ConnectionInfo.PersonalAccessToken!),
-                HttpClient);
+            return new (ConnectionInfo, HttpClient);
         }
 
         private async Task<Sprint?> GetCurrentSprint(AzureDevOpsService? azureDevOpsService = null)
@@ -132,7 +148,6 @@ namespace AutoScrum.Pages
             try
             {
                 var sprint = await GetCurrentSprint();
-
                 if (sprint is null)
                 {
                     MessageService.Warning("No current sprint found");
@@ -158,7 +173,7 @@ namespace AutoScrum.Pages
 
         private void ReloadConnectionInfoFromForm()
         {
-            ConnectionInfo = new AzureDevOpsConnectionInfo(ConnectionInfoRequest.UserEmail!, ConnectionInfoRequest.PersonalAccessToken!, ConnectionInfoRequest.AzureDevOpsOrganization!, ConnectionInfoRequest.ProjectName!, ConnectionInfoRequest.TeamFilterBy);
+            ConnectionInfo = ConnectionInfoRequest.Clone();
         }
 
         private void ReloadUsers()
@@ -170,7 +185,7 @@ namespace AutoScrum.Pages
         {
             foreach (var item in _cachedWorkItems!)
             {
-                Console.WriteLine($"{item.Type} {item.Id}: {item.Title}");
+                Console.WriteLine($"{item.Type} {item.Id}: {item.Title} - {item.AssignedToEmail}");
             }
 
             _dailyScrum.SetWorkItems(_cachedWorkItems, Users);
@@ -222,6 +237,7 @@ namespace AutoScrum.Pages
                 return users.Values.ToList();
             }
 
+            // TODO: If a user is only in a task but no PBI, this won't include them.
             foreach (var wi in workItems.Where(x => !string.IsNullOrWhiteSpace(x.AssignedToEmail) && !string.IsNullOrWhiteSpace(x.AssignedToDisplayName)))
             {
                 if (!users.ContainsKey(wi.AssignedToEmail!))

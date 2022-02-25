@@ -1,11 +1,10 @@
-﻿namespace AutoScrum.AzureDevOps.Models
+﻿namespace AutoScrum.AzureDevOps.Models;
+
+public enum StateType
 {
-    public enum StateType
-    {
-        NotStarted,
-        InProgress,
-        Committed,
-        Approved,
-        Done
-    }
+    NotStarted,
+    InProgress,
+    Committed,
+    Approved,
+    Done
 }

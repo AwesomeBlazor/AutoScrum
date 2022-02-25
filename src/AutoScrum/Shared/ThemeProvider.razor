@@ -1,6 +1,6 @@
 ﻿@using AutoScrum.Models
 
-@inject Services.ConfigService _configService
+@inject AutoScrum.Core.Services.IConfigService _configService
 
 @if (ThemeSettings is not null && ThemeSettings.Theme is not AntTheme.Default)
 {
