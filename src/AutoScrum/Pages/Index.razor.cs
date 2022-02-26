@@ -3,8 +3,6 @@ using AutoScrum.AzureDevOps;
 using AutoScrum.Core.Config;
 using AutoScrum.Core.Models;
 using AutoScrum.Core.Services;
-using AutoScrum.Models;
-using AutoScrum.Services;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using System;
@@ -18,8 +16,6 @@ namespace AutoScrum.Pages
 {
     public partial class Index
     {
-        private readonly DailyScrumService _dailyScrum = new();
-
         private const int ContentSpan = 21;
         private const int AnchorSpan = 3;
 
@@ -30,6 +26,7 @@ namespace AutoScrum.Pages
 
         private List<WorkItem>? _cachedWorkItems;
 
+        [Inject] public IDailyScrumService DailyScrum { get; set; }
         [Inject] public HttpClient HttpClient { get; set; }
         // TODO: Remove when all is updated.
         [Inject] public OldConfigService OldConfigService { get; set; }
@@ -192,15 +189,17 @@ namespace AutoScrum.Pages
                 Console.WriteLine($"{item.Type} {item.Id}: {item.Title} - {item.AssignedToEmail}");
             }
 
-            _dailyScrum.SetWorkItems(_cachedWorkItems, Users);
+            DailyScrum.SetWorkItems(_cachedWorkItems, Users);
 
             UpdateOutput();
         }
 
         private void UpdateOutput()
         {
-            _markdown = _dailyScrum.GenerateReport(Users.Where(x => x.Included).ToList());
-            var html = Markdig.Markdown.ToHtml(_markdown);
+            _markdown = DailyScrum.GenerateReport(Users.Where(x => x.Included).ToList(), ProjectType.AzureDevOps, ReportOutputType.Markdown);
+            var html = !string.IsNullOrWhiteSpace(_markdown)
+                ? Markdig.Markdown.ToHtml(_markdown)
+                : string.Empty;
             Output = (MarkupString)html;
 
             StateHasChanged();
@@ -208,13 +207,13 @@ namespace AutoScrum.Pages
 
         private void AddYesterday(WorkItem wi)
         {
-            _dailyScrum.AddYesterday(wi);
+            DailyScrum.AddYesterday(wi);
             UpdateOutput();
         }
 
         private void AddToday(WorkItem wi)
         {
-            _dailyScrum.AddToday(wi);
+            DailyScrum.AddToday(wi);
             UpdateOutput();
         }
 
@@ -222,11 +221,11 @@ namespace AutoScrum.Pages
         {
             if (isToday)
             {
-                _dailyScrum.RemoveToday(wi);
+                DailyScrum.RemoveToday(wi);
             }
             else
             {
-                _dailyScrum.RemoveYesterday(wi);
+                DailyScrum.RemoveYesterday(wi);
             }
 
             UpdateOutput();

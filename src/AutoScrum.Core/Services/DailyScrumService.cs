@@ -1,17 +1,21 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using AutoScrum.Core.Config;
 using AutoScrum.Core.Models;
-using AutoScrum.Models;
 
-namespace AutoScrum.Services;
+namespace AutoScrum.Core.Services;
 
-public class DailyScrumService
+public class DailyScrumService : IDailyScrumService
 {
-    private readonly DateService _dateService = new();
+    private readonly List<IDailyScrumGenerator> _dailyScrumGenerators;
+    private readonly IDateService _dateService;
 
-    public DailyScrumService()
+    public DailyScrumService(IEnumerable<IDailyScrumGenerator> dailyScrumGenerators, IDateService dateService)
     {
+        _dailyScrumGenerators = dailyScrumGenerators.ToList();
+        _dateService = dateService;
+
         TodayMidnight = _dateService.GetDateTimeLocal();
         TodayDay = _dateService.GetToday();
     }
@@ -100,7 +104,7 @@ public class DailyScrumService
     private void Remove(List<WorkItem> list, WorkItem wi)
     {
         // Remove the item if on top level.
-        var item = list.FirstOrDefault(x => x.Id == wi.Id);
+        var item = list.Find(x => x.Id == wi.Id);
         if (item != null)
         {
             list.Remove(item);
@@ -108,20 +112,19 @@ public class DailyScrumService
         }
 
         // Remove the item from a parent otherwise.
-        var parent = list.FirstOrDefault(x => x.Id == wi.ParentId);
+        var parent = list.Find(x => x.Id == wi.ParentId);
         if (parent == null) return;
 
-        item = parent.Children.FirstOrDefault(x => x.Id == wi.Id);
+        item = parent.Children.Find(x => x.Id == wi.Id);
         if (item != null) parent.Children.Remove(item);
     }
 
     private WorkItem? GetOrCloneParent(List<WorkItem> list, int parentId)
     {
-        var parent = list.FirstOrDefault(x => x.Id == parentId);
+        var parent = list.Find(x => x.Id == parentId);
         if (parent != null) return parent;
 
-        parent = WorkItems.FirstOrDefault(x => x.Id == parentId);
-
+        parent = WorkItems.Find(x => x.Id == parentId);
         parent = parent?.ShallowClone();
 
         if (parent is not null)
@@ -132,11 +135,11 @@ public class DailyScrumService
         return parent;
     }
 
-    public string GenerateReport(List<User> users, bool isMarkdown = true)
+    public string? GenerateReport(List<User> users, ProjectType projectType, ReportOutputType reportOutputType)
     {
         var yesterday = _dateService.GetPreviousWorkDay(TodayDay);
-        return isMarkdown
-            ? DailyScrumGenerator.GenerateMarkdownReport(TodayDay, yesterday, Today, Yesterday, users)
-            : DailyScrumGenerator.GeneratePlainTextReport(TodayDay, yesterday, Today, Yesterday);
+
+        var generator = _dailyScrumGenerators.Find(x => x.ProjectType == projectType);
+        return generator?.GenerateReport(TodayDay, yesterday, Today, Yesterday, users, reportOutputType);
     }
 }

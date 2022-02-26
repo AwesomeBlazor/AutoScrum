@@ -1,3 +1,5 @@
+using AutoScrum.AzureDevOps;
+using AutoScrum.Core;
 using AutoScrum.Infrastructure.Blazor;
 using AutoScrum.Services;
 using Microsoft.AspNetCore.Components.Web;
@@ -24,16 +26,18 @@ public static class Program
 	        BaseAddress = new Uri(builder.HostEnvironment.BaseAddress)
         });
 
-        services.AddTransient<OldConfigService>();
-	    services.AddBlazorInfrastructure();
-        services.AddTransient<AutoMessageService>();
-
-        services.AddAntDesign();
-	    services.AddTransient<IClipboardService, ClipboardService>();
+		services
+			.AddTransient<OldConfigService>()
+			.AddTransient<AutoMessageService>()
+			.AddTransient<IClipboardService, ClipboardService>()
+			.AddBlazorInfrastructure()
+			.AddAzureDevOps()
+			.AddCore();
+			
+		services.AddAntDesign();
 
 	    var host = builder.Build();
-
-        await host.RunAsync();
+	    await host.RunAsync();
 
     }
 }

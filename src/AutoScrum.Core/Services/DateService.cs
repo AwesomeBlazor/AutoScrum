@@ -1,10 +1,24 @@
 ﻿using System;
 
-namespace AutoScrum.Services;
+namespace AutoScrum.Core.Services;
 
-public class DateService
+public interface IDateService
 {
-    public static TimeOnly Midnight = TimeOnly.FromTimeSpan(TimeSpan.Zero);
+    TimeOnly Midnight { get; }
+
+    DateTimeOffset GetDateTimeLocal();
+    DateTimeOffset GetDateTimeUtc();
+    DateTime GetPreviousWorkDate(DateOnly day);
+    DateTimeOffset GetPreviousWorkDate(DateTimeOffset day);
+    DateOnly GetPreviousWorkDay(DateOnly day);
+    DateOnly GetToday();
+    DateTime GetTodayMidnight();
+}
+
+public class DateService : IDateService
+{
+    public TimeOnly Midnight { get; } = TimeOnly.FromTimeSpan(TimeSpan.Zero);
+
     public DateTimeOffset GetDateTimeUtc() => DateTimeOffset.UtcNow;
     public DateTimeOffset GetDateTimeLocal() => DateTimeOffset.Now;
     public DateTime GetTodayMidnight() => DateTime.Now.Date;
