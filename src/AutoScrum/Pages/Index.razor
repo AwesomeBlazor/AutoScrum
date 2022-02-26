@@ -111,7 +111,13 @@
             <Divider/>
 
             <CollapsibleCard Title="Output" DefaultVisible AnchorLink="output">
-                @Output
+                <div>
+                    @Output
+
+                    <div style="position:absolute; top: 70px; right: 10px;">
+                        <Button Style="border: none" OnClick="CopyCommitMessage" Icon="copy">Copy</Button>
+                    </div>
+                </div>
             </CollapsibleCard>
         }
     </AntDesign.Col>

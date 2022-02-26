@@ -6,6 +6,7 @@ using AutoScrum.Core.Services;
 using AutoScrum.Models;
 using AutoScrum.Services;
 using Microsoft.AspNetCore.Components;
+using Microsoft.JSInterop;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -34,6 +35,7 @@ namespace AutoScrum.Pages
         [Inject] public OldConfigService OldConfigService { get; set; }
         [Inject] public IConfigService ConfigService { get; set; }
         [Inject] public MessageService MessageService { get; set; }
+        [Inject] public IClipboardService ClipboardService { get; set; }
 
         private MarkupString Output { get; set; } = (MarkupString)"";
 
@@ -41,6 +43,8 @@ namespace AutoScrum.Pages
         private ProjectConfigAzureDevOps ConnectionInfoRequest { get; set; } = new();
         private List<User> Users { get; set; } = new();
         private List<User> IncludedUsers { get; set; } = new();
+
+        private string _markdown = string.Empty;
 
         protected override async Task OnInitializedAsync()
         {
@@ -195,8 +199,8 @@ namespace AutoScrum.Pages
 
         private void UpdateOutput()
         {
-            var markdown = _dailyScrum.GenerateReport(Users.Where(x => x.Included).ToList());
-            var html = Markdig.Markdown.ToHtml(markdown);
+            _markdown = _dailyScrum.GenerateReport(Users.Where(x => x.Included).ToList());
+            var html = Markdig.Markdown.ToHtml(_markdown);
             Output = (MarkupString)html;
 
             StateHasChanged();
@@ -269,5 +273,12 @@ namespace AutoScrum.Pages
 
         private string GetGenerateForLabel() => "Generate for " + ConnectionInfoRequest.TeamFilterBy;
         private void OnBlockingUpdated() => UpdateOutput();
+
+        [Inject] public IJSRuntime JSRuntime { get; set; }
+        private async Task CopyCommitMessage()
+        {
+            await ClipboardService.Copy(_markdown, Output.Value);
+            MessageService.Success("Daily Scrum copied to clipboard!");
+        }
     }
 }

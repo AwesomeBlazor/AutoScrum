@@ -7,33 +7,33 @@ using System;
 using System.Net.Http;
 using System.Threading.Tasks;
 
-namespace AutoScrum
+namespace AutoScrum;
+
+public static class Program
 {
-    public class Program
+    public static async Task Main(string[] args)
     {
-        public static async Task Main(string[] args)
+        var builder = WebAssemblyHostBuilder.CreateDefault(args);
+        builder.RootComponents.Add<App>("#app");
+        builder.RootComponents.Add<HeadOutlet>("head::after");
+
+        var services = builder.Services;
+
+        services.AddScoped(_ => new HttpClient
         {
-	        var builder = WebAssemblyHostBuilder.CreateDefault(args);
-	        builder.RootComponents.Add<App>("#app");
-	        builder.RootComponents.Add<HeadOutlet>("head::after");
+	        BaseAddress = new Uri(builder.HostEnvironment.BaseAddress)
+        });
 
-	        var services = builder.Services;
+        services.AddTransient<OldConfigService>();
+	    services.AddBlazorInfrastructure();
+        services.AddTransient<AutoMessageService>();
 
-	        services.AddScoped(_ => new HttpClient
-	        {
-		        BaseAddress = new Uri(builder.HostEnvironment.BaseAddress)
-	        });
+        services.AddAntDesign();
+	    services.AddTransient<IClipboardService, ClipboardService>();
 
-	        services.AddTransient<OldConfigService>();
-			services.AddBlazorInfrastructure();
-	        services.AddTransient<AutoMessageService>();
+	    var host = builder.Build();
 
-	        services.AddAntDesign();
+        await host.RunAsync();
 
-	        var host = builder.Build();
-
-	        await host.RunAsync();
-
-        }
     }
 }
