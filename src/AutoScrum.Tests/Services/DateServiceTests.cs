@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using AutoScrum.Services;
+using AutoScrum.Core.Services;
 using AutoScrum.Tests.Utils;
 using FluentAssertions;
 using Xunit;
