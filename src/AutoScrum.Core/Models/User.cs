@@ -1,4 +1,4 @@
-﻿namespace AutoScrum.Models;
+﻿namespace AutoScrum.Core.Models;
 
 public class User
 {

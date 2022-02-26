@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using AutoScrum.Core.Models;
-using AutoScrum.Models;
 
 namespace AutoScrum.Services;
 

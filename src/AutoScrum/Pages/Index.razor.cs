@@ -3,7 +3,6 @@ using AutoScrum.AzureDevOps;
 using AutoScrum.Core.Config;
 using AutoScrum.Core.Models;
 using AutoScrum.Core.Services;
-using AutoScrum.Models;
 using AutoScrum.Services;
 using Microsoft.AspNetCore.Components;
 using System;
