@@ -48,7 +48,7 @@ public class AzureDevOpsService
         var iterations = JsonConvert.DeserializeObject<AzureDevOpsListResult<TeamSettingsIteration>>(json);
         Console.WriteLine("Number of iterations: " + iterations.Count);
 
-        var currentSprint = iterations
+        return iterations
             .Value
             .Take(1)
             .Select(x => new Sprint
@@ -58,8 +58,6 @@ public class AzureDevOpsService
                 Path = x.Path
             })
             .FirstOrDefault();
-
-        return currentSprint;
     }
 
     public async Task<List<WorkItemModel>?> GetWorkItemsForSprint(Sprint sprint)
@@ -92,11 +90,7 @@ public class AzureDevOpsService
         // The [System.Iteration] doesn't seem to work for some reason...
         query += $"[System.IterationPath] = '{sprint.Path}' ORDER BY [State] Asc, [Changed Date] Desc";
 
-        var result = await _httpClient.PostAsJsonAsync(new Uri(_config.OrganizationUrl, $"/DefaultCollection/{_config.Project}/_apis/wit/wiql?api-version=6.0"),
-        new
-        {
-            query
-        });
+        var result = await _httpClient.PostAsJsonAsync(new Uri(_config.OrganizationUrl, $"/DefaultCollection/{_config.Project}/_apis/wit/wiql?api-version=6.0"), new { query });
 
         result.EnsureSuccessStatusCode();
 
@@ -104,36 +98,50 @@ public class AzureDevOpsService
         var iterationWis = JsonConvert.DeserializeObject<AzureDevOpsWiqlResult>(json);
 
         var wiIds = iterationWis.WorkItems
-            .Select(x => x.Id)
-            .ToList();
+            .ConvertAll(x => x.Id);
 
         return await GetWorkItems(wiIds);
     }
 
-    public async Task<List<WorkItemModel>> GetWorkItems(IEnumerable<int> ids, bool enableHierarchy = true, bool includeAssignTo = true, bool includeDetails = false)
+    private async Task<List<WorkItemModel>> GetWorkItems(IEnumerable<int> ids, bool enableHierarchy = true, bool includeAssignTo = true, bool includeDetails = false)
     {
-        var idsAsString = string.Join(",", ids.Select(x => x.ToString()));
-
-        // Minimum required.
-        string fields = "System.State,System.WorkItemType,System.Parent,System.IterationPath,System.CreatedDate,System.ChangedDate,System.Title,Microsoft.VSTS.Common.StateChangeDate,Microsoft.VSTS.CMMI.Blocked";
-        if (includeAssignTo)
+        if (ids?.Any() != true)
         {
-            fields += ",System.AssignedTo";
+            return new List<WorkItemModel>();
         }
 
-        if (includeDetails)
-        {
-            fields += ",System.Reason,Microsoft.VSTS.Scheduling.Effort,System.Tags,Microsoft.VSTS.Scheduling.RemainingWork,System.RelatedLinks,System.RelatedLinkCount,System.ExternalLinkCount";
-        }
+        string queryFields = GetQueryFields(includeAssignTo, includeDetails);
 
+        // Azure DevOps API only supports 200 items at a time. We can easily chunk them into multiple pages.
+        // https://github.com/AwesomeBlazor/AutoScrum/issues/71
+        const int pageSize = 200;
+        IEnumerable<string> chuckedIds = ids.Chunk(pageSize)
+            .Select(idsChunk => string.Join(",", idsChunk.Select(x => x.ToString())));
 
+        // Query each chunk and wait for all to finish.
+        // NOTE: Task.WhenAll() doesn't seem to support IEnumerable in Blazor WASM...
+        List<Task<List<WorkItemModel>>> tasks = chuckedIds.Select(x => GetWorkItems(x, queryFields)).ToList();
+        await Task.WhenAll(tasks);
+
+        // Merge all chunks.
+        List<WorkItemModel> workItems = tasks
+            .SelectMany(x => x.Result)
+            .ToList();
+
+        return !enableHierarchy
+            ? workItems
+            : HierarchicalRestructure(workItems);
+    }
+
+    private async Task<List<WorkItemModel>> GetWorkItems(string idsAsString, string fields)
+    {
         var result = await _httpClient.GetAsync(new Uri(_config.OrganizationUrl, $"/DefaultCollection/{_config.Project}/_apis/wit/workitems?ids={idsAsString}&fields={fields}&api-version=6.0"));
         result.EnsureSuccessStatusCode();
 
         var json = await result.Content.ReadAsStringAsync();
         var devOpsWorkItems = JsonConvert.DeserializeObject<AzureDevOpsListResult<AzureDevOpsWorkItem>>(json);
 
-        var workItems = devOpsWorkItems.Value
+        return devOpsWorkItems.Value
             .ConvertAll(x => new WorkItemModel
             {
                 Id = x.Id,
@@ -149,11 +157,11 @@ public class AzureDevOpsService
                 Blocked = x.ParseAsString("Microsoft.VSTS.CMMI.Blocked"),
                 Url = $"https://dev.azure.com/{_config.Organization}/{_config.Project}/_workItems/edit/{x.Id}"
             });
+    }
 
-        var groupedItems = workItems;
-        if (!enableHierarchy) return groupedItems;
-
-        groupedItems = new List<WorkItemModel>();
+    private static List<WorkItemModel> HierarchicalRestructure(List<WorkItemModel> workItems)
+    {
+        List<WorkItemModel> groupedItems = new();
         foreach (var wi in workItems)
         {
             wi.Parent = workItems.Find(x => x.Id == wi.ParentId);
@@ -169,5 +177,24 @@ public class AzureDevOpsService
         }
 
         return groupedItems;
+    }
+
+    private static string GetQueryFields(bool includeAssignTo, bool includeDetails)
+    {
+        // Minimum required.
+        string fields = "System.State,System.WorkItemType,System.Parent,System.IterationPath,System.CreatedDate,System.ChangedDate,System.Title,Microsoft.VSTS.Common.StateChangeDate,Microsoft.VSTS.CMMI.Blocked";
+        if (includeAssignTo)
+        {
+            // Get user assigned to the work items. (it's a complex structure)
+            fields += ",System.AssignedTo";
+        }
+
+        if (includeDetails)
+        {
+            // Get a lot more details on the work item.
+            fields += ",System.Reason,Microsoft.VSTS.Scheduling.Effort,System.Tags,Microsoft.VSTS.Scheduling.RemainingWork,System.RelatedLinks,System.RelatedLinkCount,System.ExternalLinkCount";
+        }
+
+        return fields;
     }
 }
