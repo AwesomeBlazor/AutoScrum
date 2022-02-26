@@ -1,6 +1,4 @@
 ﻿@page "/"
-@using AutoScrum.Components
-@using AutoScrum.Core.Models
 
 <AntDesign.Row>
     <AntDesign.Col Xxl="@ContentSpan" Xl="@ContentSpan" Lg="ContentSpan" Md="24" Sm="24" Xs="24">
@@ -90,7 +88,7 @@
             <Divider />
             
             <CollapsibleCard Title="Current Sprint Work Items" AnchorLink="current-sprint">
-                <WorkItemListComponent WorkItems="@_dailyScrum.WorkItems" IsOnBoard=true OnYesterday=AddYesterday OnToday=AddToday/>
+                <WorkItemListComponent WorkItems="@DailyScrum.WorkItems" IsOnBoard=true OnYesterday=AddYesterday OnToday=AddToday/>
             </CollapsibleCard>
 
             <Divider/>
@@ -98,12 +96,12 @@
             <Row>
                 <AntDesign.Col Span="12" Xl="12" Md="24" Sm="24">
                     <CollapsibleCard Title="Yesterday" AnchorLink="yesterday-today">
-                        <WorkItemListComponent WorkItems="@_dailyScrum.Yesterday" IsOnBoard=false OnRemove="wi => RemoveWorkItem(wi, false)"></WorkItemListComponent>
+                        <WorkItemListComponent WorkItems="@DailyScrum.Yesterday" IsOnBoard=false OnRemove="wi => RemoveWorkItem(wi, false)"></WorkItemListComponent>
                     </CollapsibleCard>
                 </AntDesign.Col>
                 <AntDesign.Col Span="12" Xl="12" Md="24" Sm="24">
                     <CollapsibleCard Title="Today">
-                        <WorkItemListComponent WorkItems="@_dailyScrum.Today" IsOnBoard=false OnRemove="wi => RemoveWorkItem(wi, true)"></WorkItemListComponent>
+                        <WorkItemListComponent WorkItems="@DailyScrum.Today" IsOnBoard=false OnRemove="wi => RemoveWorkItem(wi, true)"></WorkItemListComponent>
                     </CollapsibleCard>
                 </AntDesign.Col>
             </Row>

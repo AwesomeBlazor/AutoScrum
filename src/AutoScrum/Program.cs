@@ -1,3 +1,5 @@
+using AutoScrum.AzureDevOps;
+using AutoScrum.Core;
 using AutoScrum.Infrastructure.Blazor;
 using AutoScrum.Services;
 using Microsoft.AspNetCore.Components.Web;
@@ -24,14 +26,16 @@ namespace AutoScrum
 		        BaseAddress = new Uri(builder.HostEnvironment.BaseAddress)
 	        });
 
-	        services.AddTransient<OldConfigService>();
-			services.AddBlazorInfrastructure();
-	        services.AddTransient<AutoMessageService>();
-
-	        services.AddAntDesign();
+			services
+				.AddTransient<OldConfigService>()
+				.AddTransient<AutoMessageService>()
+				.AddBlazorInfrastructure()
+				.AddAzureDevOps()
+				.AddCore();
+			
+			services.AddAntDesign();
 
 	        var host = builder.Build();
-
 	        await host.RunAsync();
 
         }

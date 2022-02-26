@@ -2,14 +2,26 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using AutoScrum.Core.Config;
 using AutoScrum.Core.Models;
-using AutoScrum.Models;
+using AutoScrum.Core.Services;
 
 namespace AutoScrum.Services;
 
-public static class DailyScrumGenerator
+public class AzureDevOpsDailyScrumGenerator : IDailyScrumGenerator
 {
-    public static string GenerateMarkdownReport(DateOnly todayDay, DateOnly previousDay, List<WorkItem> today, List<WorkItem> yesterday, List<User> users)
+    public ProjectType ProjectType => ProjectType.AzureDevOps;
+
+    public string GenerateReport(DateOnly todayDay, DateOnly previousDay, List<WorkItem> today, List<WorkItem> yesterday, List<User> users, ReportOutputType reportOutputType)
+    {
+        return reportOutputType switch
+        {
+            ReportOutputType.Markdown => GenerateMarkdownReport(previousDay, today, yesterday, users),
+            _ => GeneratePlainTextReport(previousDay, today, yesterday)
+        };
+    }
+
+    public static string GenerateMarkdownReport(DateOnly previousDay, List<WorkItem> today, List<WorkItem> yesterday, List<User> users)
     {
         var isTeam = users.Count > 1;
         var dailyScrumReport = new StringBuilder();
@@ -82,11 +94,11 @@ public static class DailyScrumGenerator
                 state = "In Progress";
             }
 
-            report.Append($"- {state} - [{wi.Type} {wi.Id}]({wi.Url}): {wi.Title}{Environment.NewLine}");
+            report.Append($"- **{state}** - [{wi.Type} {wi.Id}]({wi.Url}): {wi.Title}{Environment.NewLine}");
 
             foreach (var child in userTasks)
             {
-                report.Append($"   - {child.State} - [{child.Type} {child.Id}]({child.Url}): {child.Title}{Environment.NewLine}");
+                report.Append($"   - **{child.State}** - [{child.Type} {child.Id}]({child.Url}): {child.Title}{Environment.NewLine}");
             }
         }
 
@@ -128,7 +140,7 @@ public static class DailyScrumGenerator
         return report;
     }
 
-    public static string GeneratePlainTextReport(DateOnly todayDay, DateOnly previousDay, List<WorkItem> today, List<WorkItem> yesterday)
+    public static string GeneratePlainTextReport(DateOnly previousDay, List<WorkItem> today, List<WorkItem> yesterday)
     {
         // All days except for Monday will have "Yesterday", otherwise "Friday".
         // NOTE: MVP doesn't support flexible dates like not working on project for X day and then coming back. (or work on weekends)

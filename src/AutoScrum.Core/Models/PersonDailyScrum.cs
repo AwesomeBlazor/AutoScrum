@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
-using AutoScrum.Core.Models;
 
-namespace AutoScrum.Models;
+namespace AutoScrum.Core.Models;
 
 public class PersonDailyScrum
 {
