@@ -148,7 +148,7 @@ namespace AutoScrum.Pages
             try
             {
                 var sprint = await GetCurrentSprint();
-                if (sprint is null)
+                if (sprint?.Path is null)
                 {
                     MessageService.Warning("No current sprint found");
                     return;
