@@ -147,7 +147,7 @@ public class AzureDevOpsService
                 AssignedToDisplayName = x.ParsePersonDisplayName("System.AssignedTo"),
                 AssignedToEmail = x.ParsePersonUniqueName("System.AssignedTo"),
                 Blocked = x.ParseAsString("Microsoft.VSTS.CMMI.Blocked"),
-                Url = x.Url
+                Url = $"https://dev.azure.com/{_config.Organization}/{_config.Project}/_workItems/edit/{x.Id}"
             });
 
         var groupedItems = workItems;
