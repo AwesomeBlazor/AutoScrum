@@ -32,12 +32,16 @@ namespace AutoScrum.Pages
         [Inject] public IConfigService ConfigService { get; set; }
         [Inject] public MessageService MessageService { get; set; }
 
+        public List<ProjectMetadata> ProjectMetadatas { get; set; } = new();
+
         private MarkupString Output { get; set; } = (MarkupString)"";
 
         private ProjectConfigAzureDevOps ConnectionInfo { get; set; } = new();
         private ProjectConfigAzureDevOps ConnectionInfoRequest { get; set; } = new();
         private List<User> Users { get; set; } = new();
         private List<User> IncludedUsers { get; set; } = new();
+
+        private int? _selectedProjectId;
 
         protected override async Task OnInitializedAsync()
         {
@@ -46,15 +50,8 @@ namespace AutoScrum.Pages
                 AppConfig config = await ConfigService.GetAppConfig();
                 if (config != null)
                 {
-                    var project = await ConfigService.GetCurrentProject();
-                    if (project is ProjectConfigAzureDevOps azureDevOpsProject)
-                    {
-                        ConnectionInfo = azureDevOpsProject;
-                        ConnectionInfoRequest = ConnectionInfo.Clone();
-
-                        // TODO: This should be postponed so that theme and UI can be updated.
-                        await GetDataFromAzureDevOpsAsync();
-                    }
+                    ProjectMetadatas = await ConfigService.GetProjectsMetadata();
+                    await UpdateCurrentProjectUI(true);
                 }
             }
             catch
@@ -71,6 +68,34 @@ namespace AutoScrum.Pages
             }
 
             IsPageInitializing = false;
+        }
+
+        private async Task UpdateCurrentProjectUI(bool autoUpdateDevOps)
+        {
+            ProjectConfig? project = await ConfigService.GetCurrentProject();
+            if (project is ProjectConfigAzureDevOps azureDevOpsProject)
+            {
+                ConnectionInfo = azureDevOpsProject;
+                ConnectionInfoRequest = ConnectionInfo.Clone();
+
+                _selectedProjectId = project.Id;
+
+                if (autoUpdateDevOps)
+                {
+                    try
+                    {
+                        // TODO: This should be postponed so that theme and UI can be updated.
+                        await GetDataFromAzureDevOpsAsync();
+                    }
+                    catch
+                    {
+                        // TODO: Log?
+                    }
+                }
+            }
+
+            ProjectMetadatas = await ConfigService.GetProjectsMetadata();
+            StateHasChanged();
         }
 
         private async Task SubmitAsync()
@@ -104,6 +129,8 @@ namespace AutoScrum.Pages
                 await OldConfigService.SetConfig(ConnectionInfo);
 
                 MessageService.Success("Config saved successfully!");
+
+                await UpdateCurrentProjectUI(false);
             }
 
             _connectionFormLoading = false;
@@ -114,21 +141,19 @@ namespace AutoScrum.Pages
             _connectionFormLoading = true;
 
             await ConfigService.RemoveProject(ConnectionInfo);
-            await OldConfigService.Clear();
 
             ConnectionInfo = null;
             ConnectionInfoRequest = new ProjectConfigAzureDevOps();
             MessageService.Success("Config deleted successfully!");
 
             _connectionFormLoading = false;
+
+            await UpdateCurrentProjectUI(true);
+
+            StateHasChanged();
         }
 
-        private AzureDevOpsService GetAzureDevOpsService()
-        {
-            EnsureConnectionInfoValid();
-
-            return new (ConnectionInfo, HttpClient);
-        }
+        private AzureDevOpsService GetAzureDevOpsService() => new(ConnectionInfo, HttpClient);
 
         private async Task<Sprint?> GetCurrentSprint(AzureDevOpsService? azureDevOpsService = null)
         {
@@ -142,6 +167,11 @@ namespace AutoScrum.Pages
 
         private async Task GetDataFromAzureDevOpsAsync()
         {
+            if (!EnsureConnectionInfoValid())
+            {
+                return;
+            }
+
             try
             {
                 var sprint = await GetCurrentSprint();
@@ -164,7 +194,6 @@ namespace AutoScrum.Pages
             catch
             {
                 MessageService.Error("Critical error while loading data from Azure DevOps");
-                throw;
             }
         }
 
@@ -256,17 +285,67 @@ namespace AutoScrum.Pages
             ReloadWorkItems();
         }
 
-        private void EnsureConnectionInfoValid()
+        private bool EnsureConnectionInfoValid()
         {
-            if (ConnectionInfo is null)
+            try
             {
-                throw new ArgumentNullException(nameof(ConnectionInfo));
+                if (ConnectionInfo is null)
+                {
+                    throw new ArgumentNullException(nameof(ConnectionInfo));
+                }
+
+                ConnectionInfo.EnsureValid();
+            }
+            catch
+            {
+                MessageService.Error("Validate connection config");
+                return false;
             }
 
-            ConnectionInfo.EnsureValid();
+            return true;
         }
 
         private string GetGenerateForLabel() => "Generate for " + ConnectionInfoRequest.TeamFilterBy;
         private void OnBlockingUpdated() => UpdateOutput();
+
+        private async Task AddProject()
+        {
+            var project = await ConfigService.AddOrUpdateProject(new ProjectConfigAzureDevOps
+            {
+                Name = "New Project",
+                ProjectType = ProjectType.AzureDevOps
+            });
+
+            await ConfigService.SetCurrentProject(project.Id);
+            await UpdateCurrentProjectUI(false);
+        }
+
+        private async void OnSelectedItemChangedHandler(ProjectMetadata value)
+        {
+            if (value == null || value.Id == ConnectionInfo?.Id)
+            {
+                return;
+            }
+
+            await ConfigService.SetCurrentProject(value.Id);
+            await UpdateCurrentProjectUI(true);
+
+            Console.WriteLine($"selected: ${value?.Name}");
+        }
+
+        private void OnBlur()
+        {
+            Console.WriteLine("blur");
+        }
+
+        private void OnFocus()
+        {
+            Console.WriteLine("focus");
+        }
+
+        private void OnSearch(string value)
+        {
+            Console.WriteLine($"search: {value}");
+        }
     }
 }
