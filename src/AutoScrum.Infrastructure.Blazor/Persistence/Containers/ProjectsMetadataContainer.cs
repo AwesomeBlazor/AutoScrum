@@ -6,7 +6,7 @@ namespace AutoScrum.Infrastructure.Blazor.Persistence.Containers;
 internal class ProjectsMetadataContainer : StorageContainer<List<ProjectMetadata>>
 {
     public const string StorageKey = "ProjectsMetadata";
-    public const int CurrentVersion = 1;
+    public const int CurrentVersion = 2;
 
     public ProjectsMetadataContainer()
     {

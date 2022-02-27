@@ -19,6 +19,7 @@ public class ProjectConfigAzureDevOps : ProjectConfig
         => new()
         {
             Id = Id,
+            Name = Name,
             UserEmail = UserEmail,
             PersonalAccessToken = PersonalAccessToken,
             AzureDevOpsOrganization = AzureDevOpsOrganization,
