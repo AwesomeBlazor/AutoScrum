@@ -3,7 +3,9 @@ using AutoScrum.AzureDevOps;
 using AutoScrum.Core.Config;
 using AutoScrum.Core.Models;
 using AutoScrum.Core.Services;
+using AutoScrum.Services;
 using Microsoft.AspNetCore.Components;
+using Microsoft.JSInterop;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -31,6 +33,7 @@ namespace AutoScrum.Pages
         [Inject] public OldConfigService OldConfigService { get; set; }
         [Inject] public IConfigService ConfigService { get; set; }
         [Inject] public MessageService MessageService { get; set; }
+        [Inject] public IClipboardService ClipboardService { get; set; }
 
         public List<ProjectMetadata> ProjectMetadatas { get; set; } = new();
 
@@ -42,6 +45,7 @@ namespace AutoScrum.Pages
         private List<User> IncludedUsers { get; set; } = new();
 
         private int? _selectedProjectId;
+        private string _markdown = string.Empty;
 
         protected override async Task OnInitializedAsync()
         {
@@ -175,7 +179,7 @@ namespace AutoScrum.Pages
             try
             {
                 var sprint = await GetCurrentSprint();
-                if (sprint is null)
+                if (sprint?.Path is null)
                 {
                     MessageService.Warning("No current sprint found");
                     return;
@@ -221,9 +225,9 @@ namespace AutoScrum.Pages
 
         private void UpdateOutput()
         {
-            var markdown = DailyScrum.GenerateReport(Users.Where(x => x.Included).ToList(), ProjectType.AzureDevOps, ReportOutputType.Markdown);
-            var html = !string.IsNullOrWhiteSpace(markdown)
-                ? Markdig.Markdown.ToHtml(markdown)
+            _markdown = DailyScrum.GenerateReport(Users.Where(x => x.Included).ToList(), ProjectType.AzureDevOps, ReportOutputType.Markdown);
+            var html = !string.IsNullOrWhiteSpace(_markdown)
+                ? Markdig.Markdown.ToHtml(_markdown)
                 : string.Empty;
             Output = (MarkupString)html;
 
@@ -346,6 +350,12 @@ namespace AutoScrum.Pages
         private void OnSearch(string value)
         {
             Console.WriteLine($"search: {value}");
+        }
+
+        private async Task CopyCommitMessage()
+        {
+            await ClipboardService.Copy(_markdown, Output.Value);
+            MessageService.Success("Daily Scrum copied to clipboard!");
         }
     }
 }
