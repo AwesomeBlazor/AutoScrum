@@ -65,7 +65,14 @@ internal class ConfigService : IConfigService
     {
         AppConfig? config = await GetAppConfig();
         ProjectMetadata? projectMeta = await GetProjectMetadata(config.SelectedProjectId);
-        return await _projectRepo.Get(projectMeta?.Path);
+
+        var project = await _projectRepo.Get(projectMeta?.Path);
+        if (project != null && string.IsNullOrWhiteSpace(project.Name))
+        {
+            project.Name = projectMeta?.Name ?? "Default-1";
+        }
+
+        return project;
     }
 
     public async Task<List<ProjectMetadata>> GetProjectsMetadata()
@@ -90,14 +97,18 @@ internal class ConfigService : IConfigService
             project.Id = projectsMeta.Count > 0
                 ? projectsMeta.Max(x => x.Id) + 1
                 : 1;
-            project.ProjectName ??= "default";
+            project.Name ??= "default";
             projectMetadata = new()
             {
                 Id = project.Id,
-                Name = project.ProjectName,
+                Name = project.Name,
                 Path = project.Id.ToString(),
                 ProjectType = project.ProjectType
             };
+        }
+        else
+        {
+            projectMetadata.Name = project.Name ?? project.ProjectName;
         }
 
         return await AddOrUpdateProject(projectMetadata, project);
@@ -116,20 +127,42 @@ internal class ConfigService : IConfigService
 
     public async Task RemoveProject(ProjectMetadata projectMetadata)
     {
+        if (projectMetadata == null)
+        {
+            return;
+        }
+
         string? path = await _projectsMetadataRepo.Remove(projectMetadata);
         await _projectRepo.Remove(path);
 
         _memoryCache.Remove(ProjectsMetaCacheKey);
+
+        AppConfig? config = await GetAppConfig();
+        if (projectMetadata.Id == config?.SelectedProjectId)
+        {
+            var list = await GetProjectsMetadata();
+            if (list.Any())
+            {
+                await SetCurrentProject(list[0].Id);
+            }
+        }
     }
 
     public async Task RemoveProject(ProjectConfig project)
     {
+        if (project == null)
+        {
+            return;
+        }
+
         var projectsMeta = await GetProjectsMetadata();
         var projectToRemove = projectsMeta.Find(x => x.Id == project.Id);
-        if (projectToRemove != null)
+        if (projectToRemove == null)
         {
-            await RemoveProject(projectToRemove);
+            return;
         }
+
+        await RemoveProject(projectToRemove);
     }
 
     private async Task UpdateConfig(AppConfig config)

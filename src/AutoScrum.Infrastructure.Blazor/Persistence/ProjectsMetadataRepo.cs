@@ -17,7 +17,7 @@ internal class ProjectsMetadataRepo
     public async Task<List<ProjectMetadata>> GetProjects()
     {
         ProjectsMetadataContainer? container = await _localStorage.GetItemAsync<ProjectsMetadataContainer>(ProjectsMetadataContainer.StorageKey);
-        container = await container.Migrate(() => new ProjectsMetadataMigration());
+        container = await container.Migrate(() => new ProjectsMetadataMigration(_localStorage));
 
         return container?.Item
             ?? new List<ProjectMetadata>();
@@ -29,7 +29,17 @@ internal class ProjectsMetadataRepo
 
         container ??= new();
         container.Item ??= new();
-        container.Item.Add(projectMetadata);
+
+        var original = container.Item.Find(x => x.Id == projectMetadata.Id);
+        if (original != null)
+        {
+            original.Copy(projectMetadata);
+        }
+        else
+        {
+            container.Item.Add(projectMetadata);
+        }
+
         await _localStorage.SetItemAsync(ProjectsMetadataContainer.StorageKey, container);
     }
 
@@ -48,6 +58,9 @@ internal class ProjectsMetadataRepo
         }
 
         container.Item.Remove(itemToRemove);
+
+        await _localStorage.SetItemAsync(ProjectsMetadataContainer.StorageKey, container);
+
         return itemToRemove.Path;
     }
 }
