@@ -48,7 +48,7 @@ public class AzureDevOpsDailyScrumGenerator : IDailyScrumGenerator
             report = GenerateDayMarkdownReport("Today", today, user.Email);
             AddReportSectionIfNotEmpty(userDailyScrum, report);
 
-            report = GenerateBlockersMarkdown(today, user.Blocking);
+            report = GenerateBlockersMarkdown(today, user);
             AddReportSectionIfNotEmpty(userDailyScrum, report);
 
             if (userDailyScrum.Length <= 0) continue;
@@ -105,18 +105,18 @@ public class AzureDevOpsDailyScrumGenerator : IDailyScrumGenerator
         return hasWork ? report : null;
     }
 
-    private static StringBuilder? GenerateBlockersMarkdown(List<WorkItem> workItems, string? blocker)
+    private static StringBuilder? GenerateBlockersMarkdown(List<WorkItem> workItems, User user)
     {
         var blockedItems = workItems
-            .Where(x => x.IsBlocked)
+            .Where(x => x.IsBlocked && x.AssignedToEmail == user.Email)
             .ToList();
 
         blockedItems.AddRange(workItems
             .SelectMany(x => x.Children)
-            .Where(x => x.IsBlocked));
+            .Where(x => x.IsBlocked && x.AssignedToEmail == user.Email));
 
         var anyBlockedItems = blockedItems.Any();
-        var blockerIsNullOrWhiteSpace = string.IsNullOrWhiteSpace(blocker);
+        var blockerIsNullOrWhiteSpace = string.IsNullOrWhiteSpace(user.Blocking);
 
         if (!anyBlockedItems && blockerIsNullOrWhiteSpace)
         {
@@ -134,7 +134,7 @@ public class AzureDevOpsDailyScrumGenerator : IDailyScrumGenerator
 
         if (!blockerIsNullOrWhiteSpace)
         {
-            report.Append($"- {blocker}{Environment.NewLine}");
+            report.Append($"- {user.Blocking}{Environment.NewLine}");
         }
 
         return report;
