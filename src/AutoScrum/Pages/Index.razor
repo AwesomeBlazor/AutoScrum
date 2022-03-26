@@ -32,7 +32,7 @@
             </AntDesign.Col>
         </Row>
 
-        <CollapsibleCard Title="Azure DevOps Connection Info" AnchorLink="connection-info" DefaultVisible>
+        <CollapsibleCard Title="Azure DevOps Connection Info" AnchorLink="connection-info" IsVisible="@ShowConfig">
             @* TODO: Refactor to new component: 'ConnectionInfoForm.razor' *@
             <Form Model="ConnectionInfoRequest"
                   LabelColSpan="4"
