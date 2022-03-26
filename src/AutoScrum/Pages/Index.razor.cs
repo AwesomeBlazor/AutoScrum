@@ -5,7 +5,6 @@ using AutoScrum.Core.Models;
 using AutoScrum.Core.Services;
 using AutoScrum.Services;
 using Microsoft.AspNetCore.Components;
-using Microsoft.JSInterop;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -40,6 +39,7 @@ namespace AutoScrum.Pages
         private MarkupString Output { get; set; } = (MarkupString)"";
 
         private ProjectConfigAzureDevOps ConnectionInfo { get; set; } = new();
+        private bool ShowConfig { get; set; }
         private ProjectConfigAzureDevOps ConnectionInfoRequest { get; set; } = new();
         private List<User> Users { get; set; } = new();
         private List<User> IncludedUsers { get; set; } = new();
@@ -51,11 +51,18 @@ namespace AutoScrum.Pages
         {
             try
             {
+                ShowConfig = true;
+
                 AppConfig config = await ConfigService.GetAppConfig();
                 if (config != null)
                 {
                     ProjectMetadatas = await ConfigService.GetProjectsMetadata();
                     await UpdateCurrentProjectUI(true);
+
+                    if (_selectedProjectId != null)
+                    {
+                        ShowConfig = false;
+                    }
                 }
             }
             catch

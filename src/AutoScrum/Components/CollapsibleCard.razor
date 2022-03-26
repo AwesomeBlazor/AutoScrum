@@ -1,4 +1,4 @@
-﻿<Card ChildContent="@(_visible ? ChildContent : null)" BodyStyle="@BodyStyle">
+﻿<Card ChildContent="@(_visible ? ChildContent : null!)" BodyStyle="@BodyStyle">
     <TitleTemplate>
         <div class="flex-between">
             <span id="@AnchorLink">
@@ -23,10 +23,13 @@
 
     [Parameter]
     public string? Title { get; set; }
-    
+
     [Parameter]
     public bool DefaultVisible { get; set; }
-    
+
+    [Parameter]
+    public bool IsVisible { get => _visible; set => _visible = value; }
+
     [Parameter]
     public string? AnchorLink { get; set; }
 
