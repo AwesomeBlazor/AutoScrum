@@ -1,6 +1,4 @@
-﻿using AntDesign;
-
-namespace AutoScrum.Services;
+﻿namespace AutoScrum.Services;
 
 public class AutoMessageService
 {

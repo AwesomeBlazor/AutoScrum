@@ -1,6 +1,4 @@
-﻿using System;
-using System.Threading.Tasks;
-using AutoScrum.Core.Config;
+﻿using AutoScrum.Core.Config;
 using Blazored.LocalStorage;
 
 namespace AutoScrum.Services;

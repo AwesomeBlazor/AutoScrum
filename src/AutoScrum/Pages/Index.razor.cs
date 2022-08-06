@@ -1,15 +1,5 @@
-﻿using AntDesign;
-using AutoScrum.AzureDevOps;
-using AutoScrum.Core.Config;
-using AutoScrum.Core.Models;
-using AutoScrum.Core.Services;
-using AutoScrum.Services;
+﻿using AutoScrum.AzureDevOps;
 using Microsoft.AspNetCore.Components;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net.Http;
-using System.Threading.Tasks;
 using OldConfigService = AutoScrum.Services.OldConfigService;
 
 namespace AutoScrum.Pages
