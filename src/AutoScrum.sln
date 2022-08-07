@@ -22,7 +22,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AutoScrum.Tests", "AutoScru
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AutoScrum.Core", "AutoScrum.Core\AutoScrum.Core.csproj", "{D0210D04-41C1-49A4-B3F6-830E8E5B3CF0}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AutoScrum.Infrastructure.Blazor", "AutoScrum.Infrastructure.Blazor\AutoScrum.Infrastructure.Blazor.csproj", "{8C8AEA00-4CBC-4EC6-8A7D-1EF2159F67B8}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AutoScrum.Infrastructure.Blazor", "AutoScrum.Infrastructure.Blazor\AutoScrum.Infrastructure.Blazor.csproj", "{8C8AEA00-4CBC-4EC6-8A7D-1EF2159F67B8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AutoScrum.UITests", "AutoScrum.UITests\AutoScrum.UITests.csproj", "{75294157-CF28-4C5B-8A9D-2902A2146F3E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -50,12 +52,17 @@ Global
 		{8C8AEA00-4CBC-4EC6-8A7D-1EF2159F67B8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8C8AEA00-4CBC-4EC6-8A7D-1EF2159F67B8}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8C8AEA00-4CBC-4EC6-8A7D-1EF2159F67B8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{75294157-CF28-4C5B-8A9D-2902A2146F3E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{75294157-CF28-4C5B-8A9D-2902A2146F3E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{75294157-CF28-4C5B-8A9D-2902A2146F3E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{75294157-CF28-4C5B-8A9D-2902A2146F3E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{06C04660-3255-4291-8870-D7F1FFE03B48} = {D1687D74-EA2B-48F7-B3BE-DFED9A040D46}
+		{75294157-CF28-4C5B-8A9D-2902A2146F3E} = {D1687D74-EA2B-48F7-B3BE-DFED9A040D46}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {39CF8AA0-F899-4997-AB45-48BDC4866584}
