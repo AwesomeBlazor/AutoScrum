@@ -1,1 +1,0 @@
-﻿Microsoft.Playwright.Program.Main(new[] { "install" });
