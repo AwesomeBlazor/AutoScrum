@@ -30,4 +30,4 @@ jobs:
       run: |
         $env:BaseUrl="https://autoscrum.jkdev.me"
         $env:IsGitHubActions="true"
-        dotnet test
+        dotnet test ./src/AutoScrum.sln
