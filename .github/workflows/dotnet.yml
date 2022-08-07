@@ -20,8 +20,6 @@ jobs:
         include-prerelease: true
     - name: Install Playwright CLI
       run: dotnet tool install --global Microsoft.Playwright.CLI
-    - name: Install Playwright
-      run: playwright install
     - name: Restore dependencies
       run: dotnet restore ./src/AutoScrum.sln
     - name: Build
