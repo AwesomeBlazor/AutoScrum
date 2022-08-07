@@ -18,11 +18,15 @@ jobs:
       with:
         dotnet-version: 6.0.x
         include-prerelease: true
-    - name: Install Playwright CLI
-      run: dotnet tool install --global Microsoft.Playwright.CLI
+    - name: Install Playwright
+      shell: pwsh
+      run: .\src\AutoScrum.UITests\bin\Debug\net6.0\playwright.ps1 install
     - name: Restore dependencies
       run: dotnet restore ./src/AutoScrum.sln
     - name: Build
       run: dotnet build --no-restore ./src/AutoScrum.sln
     - name: Test
-      run: dotnet test --no-build --verbosity normal ./src/AutoScrum.sln
+      run: |
+        SET BaseUrl=https://autoscrum.jkdev.me
+        SET IsGitHubActions=true
+        dotnet test --no-build --verbosity normal ./src/AutoScrum.sln
