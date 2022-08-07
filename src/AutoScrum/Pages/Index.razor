@@ -1,5 +1,16 @@
 ﻿@page "/"
 
+<div id="ui-test-hidden-states">
+    @if (!IsPageInitializing) { <input id="is-page-loading" type="hidden" value="true" /> }
+    <input id="connection-info-profile-id" type="hidden" value="@(ConnectionInfoRequest?.Id)" />
+    <input id="connection-info-profile-name" type="hidden" value="@(ConnectionInfoRequest?.Name)" />
+    <input id="connection-info-profile-email" type="hidden" value="@(ConnectionInfoRequest?.UserEmail)" />
+    <input id="connection-info-profile-org" type="hidden" value="@(ConnectionInfoRequest?.AzureDevOpsOrganization)" />
+    <input id="connection-info-profile-project-name" type="hidden" value="@(ConnectionInfoRequest?.ProjectName)" />
+    <input id="connection-info-profile-project-type" type="hidden" value="@(ConnectionInfoRequest?.ProjectType)" />
+    <input id="connection-info-profile-team-filter-by" type="hidden" value="@(ConnectionInfoRequest?.TeamFilterBy)" />
+</div>
+
 <AntDesign.Row>
     <AntDesign.Col Xxl="@ContentSpan" Xl="@ContentSpan" Lg="ContentSpan" Md="24" Sm="24" Xs="24">
 
@@ -32,52 +43,53 @@
             </AntDesign.Col>
         </Row>
 
-        <CollapsibleCard Title="Azure DevOps Connection Info" AnchorLink="connection-info" IsVisible="@ShowConfig">
+        <CollapsibleCard Title="Azure DevOps Connection Info" AnchorLink="connection-info" TitleContainerId="connection-info-header" IsVisible="@ShowConfig">
             @* TODO: Refactor to new component: 'ConnectionInfoForm.razor' *@
             <Form Model="ConnectionInfoRequest"
+                  Id="ProfileForm"
                   LabelColSpan="4"
                   WrapperColSpan="20"
                   @ref="_connectionForm"
                   Loading="_connectionFormLoading">
                 <FormItem>
-                    <AntDesign.Input @bind-Value="context.Name" Placeholder="Profile name...">
+                    <AntDesign.Input Id="ProfileName" @bind-Value="context.Name" Placeholder="Profile name...">
                         <AddOnBefore>Profile name</AddOnBefore>
                     </AntDesign.Input>
                 </FormItem>
                 <FormItem>
-                    <AntDesign.Input @bind-Value="context.UserEmail" Placeholder="Your email...">
+                    <AntDesign.Input Id="ProfileEmail" @bind-Value="context.UserEmail" Placeholder="Your email...">
                         <AddOnBefore>Email</AddOnBefore>
                     </AntDesign.Input>
                 </FormItem>
                 <FormItem>
-                    <AntDesign.InputPassword @bind-Value="context.PersonalAccessToken" Placeholder="Your Azure DevOps Personal Access Token (PAT)">
+                    <AntDesign.InputPassword Id="ProfilePat" @bind-Value="context.PersonalAccessToken" Placeholder="Your Azure DevOps Personal Access Token (PAT)">
                         <AddOnBefore>PAT</AddOnBefore>
                     </AntDesign.InputPassword>
                 </FormItem>
                 <FormItem>
-                    <AntDesign.Input @bind-Value="context.AzureDevOpsOrganization" Placeholder="Azure DevOps Organization Name or URL">
+                    <AntDesign.Input Id="ProfileOrg" @bind-Value="context.AzureDevOpsOrganization" Placeholder="Azure DevOps Organization Name or URL">
                         <AddOnBefore>Org Name</AddOnBefore>
                     </AntDesign.Input>
                 </FormItem>
                 <FormItem>
-                    <AntDesign.Input @bind-Value="context.ProjectName" Placeholder="Azure DevOps Project">
+                    <AntDesign.Input Id="ProfileProjName" @bind-Value="context.ProjectName" Placeholder="Azure DevOps Project">
                         <AddOnBefore>Project name</AddOnBefore>
                     </AntDesign.Input>
                 </FormItem>
-                <FormItem Label="@GetGenerateForLabel()">
+                <FormItem Id="ProfileTeamFilterBy" Label="@GetGenerateForLabel()">
                     <RadioGroup @bind-Value="context.TeamFilterBy">
-                        <Radio RadioButton Value="@TeamFilterBy.Me">Just me</Radio>
-                        <Radio RadioButton Value="@TeamFilterBy.Team">Team</Radio>
+                        <Radio Id="filter-by-me" RadioButton Value="@TeamFilterBy.Me">Just me</Radio>
+                        <Radio Id="filter-by-team" RadioButton Value="@TeamFilterBy.Team">Team</Radio>
                     </RadioGroup>
                 </FormItem>
                 <FormItem WrapperColOffset="4" WrapperColSpan="20">
-                    <Button Type="@ButtonType.Primary" OnClick="SubmitAsync">
+                    <Button Id="ProfileSubmit" Type="@ButtonType.Primary" OnClick="SubmitAsync">
                         Submit
                     </Button>
-                    <Button Type="@ButtonType.Default" OnClick="SaveConfigAsync">
+                    <Button Id="ProfileSave" Type="@ButtonType.Default" OnClick="SaveConfigAsync">
                         Save
                     </Button>
-                    <Button Danger Type="@ButtonType.Default" OnClick="DeleteConfigAsync">
+                    <Button  Id="ProfileDelete" Danger Type="@ButtonType.Default" OnClick="DeleteConfigAsync">
                         Delete
                     </Button>
                 </FormItem>

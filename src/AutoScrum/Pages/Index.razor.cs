@@ -41,8 +41,7 @@ namespace AutoScrum.Pages
         {
             try
             {
-                ShowConfig = true;
-
+                bool showConfig = true;
                 AppConfig config = await ConfigService.GetAppConfig();
                 if (config != null)
                 {
@@ -51,9 +50,11 @@ namespace AutoScrum.Pages
 
                     if (_selectedProjectId != null)
                     {
-                        ShowConfig = false;
+                        showConfig = false;
                     }
                 }
+
+                ShowConfig = showConfig;
             }
             catch
             {
