@@ -26,7 +26,8 @@ jobs:
       shell: pwsh
       run: .\src\AutoScrum.UITests\bin\Debug\net6.0\playwright.ps1 install
     - name: Test
+      shell: pwsh
       run: |
-        SET BaseUrl=https://autoscrum.jkdev.me
-        SET IsGitHubActions=true
-        dotnet test --no-build --verbosity normal ./src/AutoScrum.sln
+        $env:BaseUrl="https://autoscrum.jkdev.me"
+        $env:IsGitHubActions="true"
+        dotnet test
