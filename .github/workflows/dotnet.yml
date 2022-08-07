@@ -22,5 +22,12 @@ jobs:
       run: dotnet restore ./src/AutoScrum.sln
     - name: Build
       run: dotnet build --no-restore ./src/AutoScrum.sln
+    - name: Install Playwright
+      shell: pwsh
+      run: .\src\AutoScrum.UITests\bin\Debug\net6.0\playwright.ps1 install
     - name: Test
-      run: dotnet test --no-build --verbosity normal ./src/AutoScrum.sln
+      shell: pwsh
+      run: |
+        $env:BaseUrl="https://autoscrum.jkdev.me"
+        $env:IsGitHubActions="true"
+        dotnet test ./src/AutoScrum.sln
