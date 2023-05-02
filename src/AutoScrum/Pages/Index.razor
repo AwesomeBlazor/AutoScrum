@@ -23,7 +23,10 @@
 
         <Row>
             <AntDesign.Col Span="22" Xl="22" Md="24" Sm="24">
-                <Select DataSource="@ProjectMetadatas"
+                <Select
+                    TItemValue="int?"
+                    TItem="ProjectMetadata"
+                    DataSource="@ProjectMetadatas"
                     @bind-Value="@_selectedProjectId"
                     LabelName="@nameof(ProjectMetadata.Name)"
                     ValueName="@nameof(ProjectMetadata.Id)"
