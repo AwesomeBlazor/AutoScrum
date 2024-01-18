@@ -1,5 +1,5 @@
-﻿using AntDesign;
-using AutoScrum.AzureDevOps;
+﻿using AutoScrum.AzureDevOps;
+using AutoScrum.Components;
 using Microsoft.AspNetCore.Components;
 using OldConfigService = AutoScrum.Services.OldConfigService;
 
@@ -10,7 +10,8 @@ public partial class Index : ComponentBase
     private const int ContentSpan = 21;
     private const int AnchorSpan = 3;
 
-    private Form<ProjectConfigAzureDevOps> _connectionForm;
+    private CollapsibleCard _azureDevOpsConfigCard = null!;
+    private Form<ProjectConfigAzureDevOps> _connectionForm = null!;
     private bool _connectionFormLoading;
 
     private bool IsPageInitializing { get; set; } = true;
@@ -55,7 +56,7 @@ public partial class Index : ComponentBase
                 }
             }
 
-            ShowConfig = showConfig;
+            _azureDevOpsConfigCard.ChangeVisibility(showConfig);
         }
         catch
         {
